@@ -25,7 +25,7 @@
 
 - 新行为要有可重复验证手段（测试、最小脚本或手工验收步骤写进 PR）
 - 在测试/lint 工具引入之前，不假装已经有 CI 绿灯
-- TypeScript strict；禁止把类型检查关掉当功能开关；禁止 `any`（含 `as any`），用 `unknown` + 类型收窄
+- TypeScript strict；禁止把类型检查关掉当功能开关；禁止 `any`（含把值断言成 any），用 `unknown` + 类型收窄
 - `pnpm typecheck` 与 `pnpm test` 必须通过，不得用忽略规则或跳过标记糊过去
 - 错误要可见：失败时给出能定位的信息（来源 id、查询、文件路径），不要空 catch
 

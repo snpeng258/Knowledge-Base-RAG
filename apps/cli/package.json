@@ -1,0 +1,12 @@
+{
+  "name": "@summer-sum/cli",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc --noEmit -p ../../tsconfig.json"
+  },
+  "dependencies": {
+    "@summer-sum/core": "workspace:*"
+  }
+}

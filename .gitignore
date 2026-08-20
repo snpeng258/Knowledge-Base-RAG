@@ -14,12 +14,14 @@ target/
 vendor/
 
 # ========================
-# Build outputs (anchored to repo root so scripts/build/ stays tracked)
+# Build outputs (root /build/ is anchored so scripts/build/ stays tracked)
 # ========================
 /out/
 /dist/
 /build/
 /coverage/
+packages/*/dist/
+apps/*/dist/
 
 # ========================
 # Environment variables
