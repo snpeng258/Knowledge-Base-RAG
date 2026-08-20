@@ -23,7 +23,7 @@ async function attachTags(databaseUrl: string, documentId: string, tags: CorpusT
       await sql`
         INSERT INTO document_tags (document_id, tag_slug, source)
         VALUES (${documentId}, ${tag.slug}, 'human')
-        ON CONFLICT (document_id, tag_slug) DO NOTHING
+        ON CONFLICT (document_id, tag_slug) DO UPDATE SET source = 'human'
       `;
     }
   } finally {
@@ -36,12 +36,13 @@ export async function runEval(url: string, root: string): Promise<EvalReport> {
   const suite = JSON.parse(await readFile(casesPath, "utf8")) as EvalSuite;
   const idByFixture = new Map<string, string>();
   for (const entry of suite.corpus) {
-    const ingested = await ingestLocalFile(resolve(root, entry.path), url);
+    const ingested = await ingestLocalFile(resolve(root, entry.path), url, { llm: null });
     idByFixture.set(entry.path, ingested.documentId);
     await attachTags(url, ingested.documentId, entry.tags);
   }
 
   const retriever = new FulltextRetriever(url);
+  const corpusIds = new Set(idByFixture.values());
   const results: CaseResult[] = [];
   for (const evalCase of suite.cases) {
     const expectedIds = evalCase.expectedFixtures.map((path) => {
@@ -55,7 +56,7 @@ export async function runEval(url: string, root: string): Promise<EvalReport> {
       query: evalCase.query,
       ...(evalCase.tags !== undefined && evalCase.tags.length > 0 ? { tags: evalCase.tags } : {}),
     });
-    const actualIds = response.results.map((card) => card.id);
+    const actualIds = response.results.map((card) => card.id).filter((id) => corpusIds.has(id));
     results.push({
       id: evalCase.id,
       category: evalCase.category,

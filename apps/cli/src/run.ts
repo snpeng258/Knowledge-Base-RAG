@@ -7,9 +7,12 @@ import {
   ingestLarkMinute,
   ingestUrls,
   listLarkMinutes,
+  listTagProposals,
   listTags,
   loadEnvFiles,
   NotFoundError,
+  approveTagProposal,
+  rejectTagProposal,
   repoRootFrom,
 } from "@summer-sum/core";
 import type { SearchQuery } from "@summer-sum/core";
@@ -191,13 +194,59 @@ async function dispatch(argv: string[]): Promise<number> {
   }
 
   if (command === "tags") {
-    const rows = await listTags(requireDatabaseUrl(cfg.databaseUrl));
-    if (args.json) {
-      printJson(rows);
-    } else {
-      writeOut(formatTagsHuman(rows));
+    const dbUrl = requireDatabaseUrl(cfg.databaseUrl);
+    const sub = args.positional[1];
+    if (sub === undefined || sub === "list") {
+      const rows = await listTags(dbUrl);
+      if (args.json) {
+        printJson(rows);
+      } else {
+        writeOut(formatTagsHuman(rows));
+      }
+      return EXIT.ok;
     }
-    return EXIT.ok;
+    if (sub === "proposals") {
+      const rows = await listTagProposals(dbUrl);
+      if (args.json) {
+        printJson(
+          rows.map((row) => ({
+            id: row.id,
+            proposed_name: row.proposedName,
+            reason: row.reason,
+            document_id: row.documentId,
+            status: row.status,
+            created_at: row.createdAt,
+          })),
+        );
+      } else if (rows.length === 0) {
+        writeOut("No tag proposals.\n");
+      } else {
+        writeOut(
+          `${rows.map((row) => `${row.id}\t${row.status}\t${row.proposedName ?? ""}\t${row.reason ?? ""}`).join("\n")}\n`,
+        );
+      }
+      return EXIT.ok;
+    }
+    const proposalId = args.positional[2];
+    if ((sub === "approve" || sub === "reject") && proposalId !== undefined) {
+      if (sub === "approve") {
+        const tag = await approveTagProposal(dbUrl, proposalId);
+        if (args.json) {
+          printJson(tag);
+        } else {
+          writeOut(`approved ${tag.slug}\n`);
+        }
+      } else {
+        await rejectTagProposal(dbUrl, proposalId);
+        if (args.json) {
+          printJson({ id: proposalId, status: "rejected" });
+        } else {
+          writeOut(`rejected ${proposalId}\n`);
+        }
+      }
+      return EXIT.ok;
+    }
+    usage("usage: kb tags [list|proposals|approve <id>|reject <id>]");
   }
 
   if (command === "doctor") {

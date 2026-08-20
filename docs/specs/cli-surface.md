@@ -40,7 +40,9 @@ CLI 有两类消费者，需求不同：
 | 命令 | 用途 | 路径 | LLM 依赖 |
 |---|---|---|---|
 | `kb doctor` | 健康检查 | — | 否 |
-| `kb tags` | 列出标签词表 | 读 | 否 |
+| `kb tags` | 列出受控词表（含判据 description） | 读 | 否 |
+| `kb tags proposals` | 列出待确认标签提议 | 读 | 否 |
+| `kb tags approve <id>` / `kb tags reject <id>` | 审批新标签提议 | 写 | 否 |
 | `kb search <query>` | 返回文档级卡片 | 读 | 否 |
 | `kb get <id>` | 取文档全文 | 读 | 否 |
 | `kb ls` | 按条件列文档 | 读 | 否 |

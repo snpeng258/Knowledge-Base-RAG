@@ -3,7 +3,7 @@ import { spawnSync } from "node:child_process";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { test } from "node:test";
-import { databaseUrl, loadEnvFiles, repoRootFrom } from "@summer-sum/core";
+import { databaseUrl, loadEnvFiles, repoRootFrom, setDocumentTag } from "@summer-sum/core";
 import { EXIT } from "./exit.ts";
 
 const root = repoRootFrom(import.meta.url);
@@ -61,7 +61,7 @@ test("empty search results still exit 0", () => {
   assert.equal(body.results.length, 0);
 });
 
-test("ingest file, search, get, tags, and doctor work", () => {
+test("ingest file, search, get, tags, and doctor work", async () => {
   const ingested = kb(["ingest", "file", fixture, "--json"]);
   assert.equal(ingested.status, EXIT.ok, ingested.stderr);
   const ingestBody = JSON.parse(ingested.stdout) as { document_id: string };
@@ -85,7 +85,19 @@ test("ingest file, search, get, tags, and doctor work", () => {
 
   const tags = kb(["tags", "--json"]);
   assert.equal(tags.status, EXIT.ok, tags.stderr);
-  assert.ok(Array.isArray(JSON.parse(tags.stdout)));
+  const tagRows = JSON.parse(tags.stdout) as { slug: string; description: string | null }[];
+  assert.ok(tagRows.length > 0);
+  assert.ok(tagRows.every((row) => typeof row.description === "string" && row.description.length > 0));
+
+  await setDocumentTag(databaseUrl(), ingestBody.document_id, "product-strategy", "human");
+  const byTag = kb(["search", "产品力", "--tag", "product-strategy", "--json"]);
+  assert.equal(byTag.status, EXIT.ok, byTag.stderr);
+  const taggedBody = JSON.parse(byTag.stdout) as { results: { id: string }[] };
+  assert.ok(taggedBody.results.some((row) => row.id === ingestBody.document_id));
+
+  const proposals = kb(["tags", "proposals", "--json"]);
+  assert.equal(proposals.status, EXIT.ok, proposals.stderr);
+  assert.ok(Array.isArray(JSON.parse(proposals.stdout)));
 
   const doctor = kb(["doctor", "--json"]);
   assert.equal(doctor.status, EXIT.ok, doctor.stderr);

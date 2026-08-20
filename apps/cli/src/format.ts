@@ -70,11 +70,11 @@ export function formatGetHuman(doc: DocumentRecord): string {
   return `${doc.id}  [${doc.kind}]  ${doc.title}\n\n${doc.content}\n`;
 }
 
-export function formatTagsHuman(rows: { slug: string; name: string }[]): string {
+export function formatTagsHuman(rows: { slug: string; name: string; description?: string | null }[]): string {
   if (rows.length === 0) {
     return "No tags.\n";
   }
-  return `${rows.map((row) => `${row.slug}\t${row.name}`).join("\n")}\n`;
+  return `${rows.map((row) => `${row.slug}\t${row.name}\t${row.description ?? ""}`).join("\n")}\n`;
 }
 
 export function formatDoctorHuman(report: DoctorReport): string {

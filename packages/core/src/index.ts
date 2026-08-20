@@ -18,3 +18,11 @@ export { NotFoundError, DependencyError } from "./errors.ts";
 export { doctorReport } from "./health/doctor.ts";
 export type { DoctorReport } from "./health/doctor.ts";
 export type { LlmProvider } from "./llm/types.ts";
+export {
+  attachTags,
+  approveTagProposal,
+  listTagProposals,
+  rejectTagProposal,
+  setDocumentTag,
+} from "./llm/tagging.ts";
+export type { TagProposal, VocabTag } from "./llm/tagging.ts";

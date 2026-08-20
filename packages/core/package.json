@@ -8,7 +8,7 @@
   },
   "scripts": {
     "typecheck": "tsc --noEmit -p ../../tsconfig.json",
-    "test": "node --test --test-concurrency=1 --experimental-strip-types src/index.test.ts src/db/schema.test.ts src/ingest/file.test.ts src/ingest/lark-transcript.test.ts src/ingest/lark.test.ts src/ingest/url.test.ts src/llm/refine.test.ts src/lark/parse.test.ts src/retrieve/fulltext.test.ts src/eval/types.test.ts src/eval/run.test.ts",
+    "test": "node --test --test-concurrency=1 --experimental-strip-types src/index.test.ts src/db/schema.test.ts src/ingest/file.test.ts src/ingest/lark-transcript.test.ts src/ingest/lark.test.ts src/ingest/url.test.ts src/llm/refine.test.ts src/llm/tagging.test.ts src/lark/parse.test.ts src/retrieve/fulltext.test.ts src/eval/types.test.ts src/eval/run.test.ts",
     "eval": "node --experimental-strip-types ./src/eval/run.ts"
   },
   "dependencies": {
