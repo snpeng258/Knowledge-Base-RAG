@@ -1,0 +1,93 @@
+{
+  "version": 1,
+  "corpus": [
+    {
+      "path": "fixtures/sample-meeting.md",
+      "tags": [{ "slug": "product-strategy", "name": "产品策略" }]
+    },
+    {
+      "path": "fixtures/eval/sample-article.md",
+      "tags": [{ "slug": "storage", "name": "存储" }]
+    },
+    {
+      "path": "fixtures/eval/sample-ops.md",
+      "tags": [{ "slug": "infrastructure", "name": "基础设施" }]
+    }
+  ],
+  "cases": [
+    {
+      "id": "keyword-product-force",
+      "category": "keyword",
+      "query": "产品力",
+      "expectedFixtures": ["fixtures/sample-meeting.md"],
+      "expect": "pass"
+    },
+    {
+      "id": "keyword-tech-force",
+      "category": "keyword",
+      "query": "技术力",
+      "expectedFixtures": ["fixtures/sample-meeting.md"],
+      "expect": "pass"
+    },
+    {
+      "id": "keyword-pgvector",
+      "category": "keyword",
+      "query": "pgvector",
+      "expectedFixtures": ["fixtures/eval/sample-article.md"],
+      "expect": "pass"
+    },
+    {
+      "id": "keyword-compose",
+      "category": "keyword",
+      "query": "Docker Compose",
+      "expectedFixtures": ["fixtures/eval/sample-ops.md"],
+      "expect": "pass"
+    },
+    {
+      "id": "keyword-chat-boundary",
+      "category": "keyword",
+      "query": "聊天发言原文",
+      "expectedFixtures": ["fixtures/sample-meeting.md"],
+      "expect": "pass"
+    },
+    {
+      "id": "synonym-user-experience",
+      "category": "synonym",
+      "query": "user experience",
+      "expectedFixtures": ["fixtures/sample-meeting.md"],
+      "expect": "known-fail",
+      "reason": "fulltext cannot match an English gloss of 产品力"
+    },
+    {
+      "id": "synonym-rag-english",
+      "category": "synonym",
+      "query": "retrieval augmented generation",
+      "expectedFixtures": ["fixtures/sample-meeting.md"],
+      "expect": "known-fail",
+      "reason": "fulltext cannot match an English gloss of 知识检索"
+    },
+    {
+      "id": "tag-product-strategy",
+      "category": "tag",
+      "query": "产品力",
+      "tags": ["product-strategy"],
+      "expectedFixtures": ["fixtures/sample-meeting.md"],
+      "expect": "pass"
+    },
+    {
+      "id": "tag-wrong-filter",
+      "category": "tag",
+      "query": "产品力",
+      "tags": ["infrastructure"],
+      "expectedFixtures": [],
+      "expect": "pass"
+    },
+    {
+      "id": "none-impossible-token",
+      "category": "none",
+      "query": "xyzzy-eval-no-hit-token",
+      "expectedFixtures": [],
+      "expect": "pass"
+    }
+  ]
+}
