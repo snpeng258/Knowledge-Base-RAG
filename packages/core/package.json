@@ -8,6 +8,10 @@
   },
   "scripts": {
     "typecheck": "tsc --noEmit -p ../../tsconfig.json",
-    "test": "node --test --experimental-strip-types src/index.test.ts"
+    "test": "node --test --experimental-strip-types src/index.test.ts src/db/schema.test.ts"
+  },
+  "dependencies": {
+    "drizzle-orm": "^0.45.2",
+    "postgres": "^3.4.9"
   }
 }

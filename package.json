@@ -9,7 +9,7 @@
   "scripts": {
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "test": "pnpm --filter @summer-sum/core test",
-    "db:migrate": "node ./scripts/setup/db-migrate-placeholder.mjs"
+    "db:migrate": "node --experimental-strip-types ./packages/core/src/db/migrate.ts"
   },
   "devDependencies": {
     "@types/node": "^24.3.0",
