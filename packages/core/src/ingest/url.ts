@@ -5,6 +5,7 @@ import { ingestRuns } from "../db/schema.ts";
 import { DependencyError, isUnavailableMessage } from "../errors.ts";
 import { splitIntoChunks } from "./chunk.ts";
 import { extractArticle } from "./extract-html.ts";
+import { attachDescription, providerForRuntime } from "../llm/refine.ts";
 import { persistDocument } from "./persist.ts";
 import { defaultUrlFetcher, type UrlFetcher } from "./url-fetch.ts";
 import { linkDocumentId, normalizeUrl } from "./url-normalize.ts";
@@ -122,6 +123,7 @@ export async function ingestUrl(
           })),
         }),
       );
+      await attachDescription(databaseUrl, persisted.documentId, extracted.content, providerForRuntime());
       await db
         .update(ingestRuns)
         .set({ finishedAt: new Date(), docCount: 1, status: "success" })

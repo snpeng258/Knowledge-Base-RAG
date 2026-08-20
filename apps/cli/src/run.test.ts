@@ -94,8 +94,30 @@ test("ingest file, search, get, tags, and doctor work", () => {
     items: { name: string; required: boolean; status: string }[];
   };
   assert.equal(report.ok, true);
+  const names = report.items.map((item) => item.name);
+  assert.ok(names.includes("ollama"));
+  assert.ok(names.includes("ollama_model"));
   const optional = report.items.filter((item) => !item.required);
   assert.ok(optional.every((item) => item.status === "ok" || item.status === "degraded"));
+
+  const searchWithoutOllama = kb(["search", "产品力"], {
+    ...process.env,
+    KB_OLLAMA_URL: "http://127.0.0.1:1",
+  });
+  assert.equal(searchWithoutOllama.status, EXIT.ok, searchWithoutOllama.stderr);
+});
+
+test("doctor with unreachable ollama is not exit 3", () => {
+  const result = kb(["doctor", "--json"], {
+    ...process.env,
+    KB_OLLAMA_URL: "http://127.0.0.1:1",
+  });
+  assert.equal(result.status, EXIT.ok, result.stderr);
+  const report = JSON.parse(result.stdout) as {
+    items: { name: string; status: string }[];
+  };
+  const ollama = report.items.find((item) => item.name === "ollama");
+  assert.equal(ollama?.status, "degraded");
 });
 
 test("unreachable database is exit 3", () => {

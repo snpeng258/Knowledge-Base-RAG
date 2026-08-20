@@ -5,6 +5,7 @@ import { ingestRuns } from "../db/schema.ts";
 import { DependencyError, isUnavailableMessage } from "../errors.ts";
 import { LarkCliClient, type LarkMinutesClient } from "../lark/cli.ts";
 import { documentFromUtterances, meetingDocumentId, parseMinutesTranscript } from "./lark-transcript.ts";
+import { attachDescription, providerForRuntime } from "../llm/refine.ts";
 import { persistDocument } from "./persist.ts";
 
 export type IngestLarkResult = {
@@ -76,6 +77,7 @@ export async function ingestLarkMinute(
           })),
         }),
       );
+      await attachDescription(databaseUrl, result.documentId, content, providerForRuntime());
       await db
         .update(ingestRuns)
         .set({ finishedAt: new Date(), docCount: 1, status: "success" })

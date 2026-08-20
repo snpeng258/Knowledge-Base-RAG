@@ -4,6 +4,8 @@ import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 import { ingestRuns } from "../db/schema.ts";
 import { DependencyError, isUnavailableMessage } from "../errors.ts";
+import { attachDescription, providerForRuntime } from "../llm/refine.ts";
+import type { LlmProvider } from "../llm/types.ts";
 import { splitIntoChunks } from "./chunk.ts";
 import { persistDocument } from "./persist.ts";
 import { canonicalLocalPath, slugFromFilePath } from "./slug.ts";
@@ -36,6 +38,7 @@ function wrapIngestError(error: unknown): never {
 export async function ingestLocalFile(
   filePath: string,
   databaseUrl: string,
+  options?: { llm?: LlmProvider | null },
 ): Promise<IngestFileResult> {
   const absolutePath = canonicalLocalPath(filePath);
   let content: string;
@@ -62,6 +65,7 @@ export async function ingestLocalFile(
 
     try {
       const result = await db.transaction((tx) => writeFileDocument(tx, absolutePath, content));
+      await attachDescription(databaseUrl, result.documentId, content, providerForRuntime(options?.llm));
       await db
         .update(ingestRuns)
         .set({

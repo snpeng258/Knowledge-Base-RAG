@@ -17,3 +17,4 @@ export type { DocumentRecord } from "./documents/access.ts";
 export { NotFoundError, DependencyError } from "./errors.ts";
 export { doctorReport } from "./health/doctor.ts";
 export type { DoctorReport } from "./health/doctor.ts";
+export type { LlmProvider } from "./llm/types.ts";

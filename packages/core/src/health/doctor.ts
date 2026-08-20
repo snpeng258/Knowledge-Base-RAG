@@ -25,6 +25,28 @@ async function ping(url: string, timeoutMs: number): Promise<boolean> {
   }
 }
 
+async function inspectOllama(ollamaUrl: string, model: string): Promise<{ reachable: boolean; modelReady: boolean }> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 1500);
+  try {
+    const response = await fetch(`${ollamaUrl.replace(/\/$/, "")}/api/tags`, { signal: controller.signal });
+    if (!response.ok) {
+      return { reachable: true, modelReady: false };
+    }
+    const payload: unknown = await response.json();
+    const models =
+      typeof payload === "object" && payload !== null && Array.isArray((payload as { models?: unknown }).models)
+        ? ((payload as { models: Array<{ name?: string }> }).models)
+        : [];
+    const modelReady = models.some((row) => typeof row.name === "string" && (row.name === model || row.name.startsWith(`${model}:`)));
+    return { reachable: true, modelReady };
+  } catch {
+    return { reachable: false, modelReady: false };
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 export async function doctorReport(input: {
   databaseUrl: string;
   teiUrl: string;
@@ -79,12 +101,19 @@ export async function doctorReport(input: {
     detail: teiOk ? input.teiUrl : `unreachable: ${input.teiUrl}`,
   });
 
-  const ollamaOk = await ping(input.ollamaUrl, 1500);
+  const ollamaModel = process.env.KB_LLM_MODEL ?? "qwen3:8b";
+  const ollama = await inspectOllama(input.ollamaUrl, ollamaModel);
   items.push({
     name: "ollama",
     required: false,
-    status: ollamaOk ? "ok" : "degraded",
-    detail: ollamaOk ? input.ollamaUrl : `unreachable: ${input.ollamaUrl}`,
+    status: ollama.reachable ? "ok" : "degraded",
+    detail: ollama.reachable ? input.ollamaUrl : `unreachable: ${input.ollamaUrl}`,
+  });
+  items.push({
+    name: "ollama_model",
+    required: false,
+    status: ollama.modelReady ? "ok" : "degraded",
+    detail: ollama.modelReady ? `${ollamaModel} ready` : `${ollamaModel} not ready`,
   });
 
   return {

@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
-import { resolve } from "node:path";
+import { readdir, readFile } from "node:fs/promises";
+import { join, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import { test } from "node:test";
 import postgres from "postgres";
 import { databaseUrl, loadEnvFiles, repoRootFrom } from "../db/env.ts";
@@ -17,11 +18,12 @@ test("write and read paths share the same tokenizer", () => {
 });
 
 test("fulltext retriever does not import model clients", async () => {
-  const dir = new URL("./", import.meta.url);
-  const files = ["fulltext.ts", "query.ts", "types.ts"];
-  for (const name of files) {
-    const src = await readFile(new URL(name, dir), "utf8");
-    assert.doesNotMatch(src, /ollama|tei|openai/i);
+  const dir = fileURLToPath(new URL("./", import.meta.url));
+  const names = (await readdir(dir)).filter((name) => name.endsWith(".ts") && !name.endsWith(".test.ts"));
+  assert.ok(names.length > 0);
+  for (const name of names) {
+    const src = await readFile(join(dir, name), "utf8");
+    assert.doesNotMatch(src, /ollama|tei|openai|\/llm\/|LlmProvider|completeJson/i);
   }
 });
 
