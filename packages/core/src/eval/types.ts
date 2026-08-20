@@ -37,7 +37,7 @@ export type CaseResult = {
 };
 
 export type EvalReport = {
-  stage: "fulltext";
+  stage: "fulltext" | "hybrid";
   total: number;
   pass: number;
   knownFail: number;
@@ -61,7 +61,7 @@ export function classifyCase(expect: EvalExpect, hit: boolean): CaseStatus {
   return hit ? "pass" : "unexpected-fail";
 }
 
-export function summarize(results: CaseResult[]): EvalReport {
+export function summarize(results: CaseResult[], stage: EvalReport["stage"] = "fulltext"): EvalReport {
   const pass = results.filter((row) => row.status === "pass").length;
   const knownFail = results.filter((row) => row.status === "known-fail").length;
   const unexpectedFail = results.filter((row) => row.status === "unexpected-fail").length;
@@ -69,7 +69,7 @@ export function summarize(results: CaseResult[]): EvalReport {
   const expectedPass = results.filter((row) => row.expect === "pass").length;
   const hitRate = expectedPass === 0 ? 0 : pass / expectedPass;
   return {
-    stage: "fulltext",
+    stage,
     total: results.length,
     pass,
     knownFail,

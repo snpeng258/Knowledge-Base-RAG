@@ -1,12 +1,7 @@
 import { DependencyError, isUnavailableMessage } from "../errors.ts";
+import type { Embedder } from "./types.ts";
 
-export type Embedder = {
-  readonly name: string;
-  readonly modelName: string;
-  readonly dim: number;
-  embed(texts: string[]): Promise<number[][]>;
-  info(): Promise<{ modelName: string }>;
-};
+export type { Embedder } from "./types.ts";
 
 const DEFAULT_MODEL = "BAAI/bge-m3";
 const DEFAULT_DIM = 1024;

@@ -11,6 +11,7 @@ export { ingestUrl, ingestUrls } from "./ingest/url.ts";
 export type { IngestUrlBatchResult } from "./ingest/url.ts";
 export { createAuthFailClient } from "./lark/cli.ts";
 export { FulltextRetriever } from "./retrieve/fulltext.ts";
+export { HybridRetriever } from "./retrieve/hybrid.ts";
 export type { Retriever, SearchQuery, SearchResponse } from "./retrieve/types.ts";
 export { getDocument, listTags } from "./documents/access.ts";
 export type { DocumentRecord } from "./documents/access.ts";

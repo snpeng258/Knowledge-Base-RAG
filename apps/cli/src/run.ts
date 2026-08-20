@@ -1,7 +1,7 @@
 import {
   DependencyError,
   doctorReport,
-  FulltextRetriever,
+  HybridRetriever,
   getDocument,
   ingestLocalFile,
   ingestLarkMinute,
@@ -171,7 +171,10 @@ async function dispatch(argv: string[]): Promise<number> {
     if (query === undefined || query.length === 0) {
       usage("usage: kb search <query>");
     }
-    const retriever = new FulltextRetriever(requireDatabaseUrl(cfg.databaseUrl));
+    const retriever = new HybridRetriever(
+      requireDatabaseUrl(cfg.databaseUrl),
+      new TeiEmbedder(cfg.teiUrl, process.env.KB_EMBED_MODEL ?? "BAAI/bge-m3"),
+    );
     const response = await retriever.search(toSearchQuery(query, args));
     if (args.json) {
       printJson(formatSearchJson(response));

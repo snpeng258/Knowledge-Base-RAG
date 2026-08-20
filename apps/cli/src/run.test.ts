@@ -120,11 +120,19 @@ test("ingest file, search, get, tags, and doctor work", async () => {
   });
   assert.equal(searchWithoutOllama.status, EXIT.ok, searchWithoutOllama.stderr);
 
-  const searchWithoutTei = kb(["search", "产品力"], {
+  const searchWithoutTei = kb(["search", "产品力", "--json"], {
     ...process.env,
     KB_TEI_URL: "http://127.0.0.1:1",
   });
   assert.equal(searchWithoutTei.status, EXIT.ok, searchWithoutTei.stderr);
+  const degradedBody = JSON.parse(searchWithoutTei.stdout) as {
+    stage: string;
+    degraded: boolean;
+    results: unknown[];
+  };
+  assert.equal(degradedBody.stage, "fulltext");
+  assert.equal(degradedBody.degraded, true);
+  assert.ok(degradedBody.results.length > 0);
 });
 
 test("embed with unreachable tei is exit 3", () => {

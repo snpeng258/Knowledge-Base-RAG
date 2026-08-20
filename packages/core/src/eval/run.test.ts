@@ -3,6 +3,7 @@ import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { test } from "node:test";
 import { databaseUrl, loadEnvFiles, repoRootFrom } from "../db/env.ts";
+import { FulltextRetriever } from "../retrieve/fulltext.ts";
 import { runEval } from "./run.ts";
 import type { EvalSuite } from "./types.ts";
 
@@ -35,7 +36,7 @@ test("eval suite covers four categories and at least eight cases", async () => {
 });
 
 test("fulltext eval baseline has no unexpected failures", async () => {
-  const report = await runEval(databaseUrl(), root);
+  const report = await runEval(databaseUrl(), root, new FulltextRetriever(databaseUrl()));
   const unexpected = report.results.filter((row) => row.status === "unexpected-fail").map((row) => row.id);
   assert.deepEqual(unexpected, [], `unexpected-fail: ${unexpected.join(",")}`);
   assert.equal(report.hitRate, 1);
