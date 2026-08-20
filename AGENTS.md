@@ -62,12 +62,18 @@ pnpm kb tags                # 列出标签词表
 
 ## When Blocked
 
-- 需要选定 **Web UI 框架、部署平台、线上鉴权** → **停止并提问**，见 [working-direction.md](docs/designs/working-direction.md) §9.2。语言、仓库形态、数据库、向量方案**已定**，见 ADR-001
-- 需要引入 ADR 未涵盖的重要依赖 → 停止并提问
+**先判断自己处于哪种模式**——两种模式下同一个阻塞的处置完全不同：
+
+**有人值守（默认）**：下列情况停止并提问。
+
+- 需要选定 **Web UI 框架、部署平台、线上鉴权** → 见 [working-direction.md](docs/designs/working-direction.md) §9.2。语言、仓库形态、数据库、向量方案**已定**，见 ADR-001
+- 需要引入 ADR 未涵盖的重要依赖
 - 规范与产品草案冲突 → 停止并指出冲突，不要默默改其中一方
 - Merge conflicts → 停止并列出冲突文件
-- **无人值守执行时**：按 [plan-loop-engineering.md](docs/plans/plan-loop-engineering.md) 第 6 节的阻塞处置矩阵自主判断。环境/实现类问题可自行解决，**决策类一律记录后跳过，绝不自行拍板**
-- **Never**：force push、跳过已约定检查、删除远程、把聊天记录导入方案写进代码
+
+**无人值守（长程执行）**：**不存在「停下提问」这个选项**，停下等待等于整个时间窗停摆。按 [plan-loop-engineering.md](docs/plans/plan-loop-engineering.md) 第 6 节执行「自愈 → 绕过 → 继续」：上述所有需要人拍板的情况，一律写进 issue comment 后**绕过该任务并继续下一个**，既不自行拍板也不停下等待。唯一的硬约束是第 8.1 节的不可逆破坏性操作。
+
+- **Never（两种模式同等生效）**：force push、跳过已约定检查、删除远程、把聊天记录导入方案写进代码
 
 ## Project Structure
 
