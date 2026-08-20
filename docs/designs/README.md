@@ -3,7 +3,7 @@
 设计文档。
 
 > Created: 2026-08-20
-> Updated: 2026-08-20
+> Updated: 2026-08-21
 
 ## 用途
 
@@ -16,6 +16,7 @@
 
 ## 现有文档
 
+- [adr-001-tech-stack-and-architecture.md](./adr-001-tech-stack-and-architecture.md) — **技术栈与分层架构决策**（status: accepted）。实现前必读，第 6 节为红线
 - [working-direction.md](./working-direction.md) — Knowledge-Base-RAG —— Summer-Sum 阶段性方向草案
 
 ## 文档结构模板
