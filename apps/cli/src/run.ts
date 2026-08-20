@@ -1,0 +1,176 @@
+import {
+  DependencyError,
+  doctorReport,
+  FulltextRetriever,
+  getDocument,
+  ingestLocalFile,
+  listTags,
+  loadEnvFiles,
+  NotFoundError,
+  repoRootFrom,
+} from "@summer-sum/core";
+import type { SearchQuery } from "@summer-sum/core";
+import { parseArgs, parseDateFlag } from "./args.ts";
+import { CliExit, EXIT, usage } from "./exit.ts";
+import {
+  formatDoctorHuman,
+  formatGetHuman,
+  formatGetJson,
+  formatIngestHuman,
+  formatIngestJson,
+  formatSearchHuman,
+  formatSearchJson,
+  formatTagsHuman,
+  printJson,
+} from "./format.ts";
+
+function writeOut(text: string): void {
+  process.stdout.write(text);
+}
+
+function writeErr(text: string): void {
+  process.stderr.write(text);
+}
+
+function loadConfig(args: ReturnType<typeof parseArgs>) {
+  const root = repoRootFrom(import.meta.url);
+  loadEnvFiles(root);
+  return {
+    databaseUrl: args.databaseUrl ?? process.env.KB_DATABASE_URL ?? "",
+    teiUrl: args.teiUrl ?? process.env.KB_TEI_URL ?? "http://localhost:8080",
+    ollamaUrl: args.ollamaUrl ?? process.env.KB_OLLAMA_URL ?? "http://localhost:11434",
+    remoteUrl: process.env.KB_REMOTE_URL,
+    root,
+  };
+}
+
+function requireDatabaseUrl(url: string): string {
+  if (url.length === 0) {
+    throw new DependencyError("KB_DATABASE_URL is not set");
+  }
+  return url;
+}
+
+function toSearchQuery(query: string, args: ReturnType<typeof parseArgs>): SearchQuery {
+  const input: SearchQuery = { query };
+  if (args.tags.length > 0) {
+    input.tags = args.tags;
+  }
+  if (args.kind !== undefined) {
+    input.kind = args.kind;
+  }
+  if (args.limit !== undefined) {
+    input.limit = args.limit;
+  }
+  if (args.since !== undefined) {
+    input.since = parseDateFlag(args.since, "--since");
+  }
+  if (args.until !== undefined) {
+    input.until = parseDateFlag(args.until, "--until");
+  }
+  return input;
+}
+
+async function dispatch(argv: string[]): Promise<number> {
+  const args = parseArgs(argv);
+  const cfg = loadConfig(args);
+  if (args.remote || (cfg.remoteUrl !== undefined && cfg.remoteUrl.length > 0)) {
+    usage("remote mode is not implemented yet; omit --remote and KB_REMOTE_URL to use the local database");
+  }
+  const command = args.positional[0];
+  if (command === undefined) {
+    usage("usage: kb <ingest|search|get|tags|doctor> [...]");
+  }
+
+  if (command === "ingest") {
+    const target = args.positional[1];
+    const filePath = args.positional[2];
+    if (target !== "file" || filePath === undefined) {
+      usage("usage: kb ingest file <path>");
+    }
+    const result = await ingestLocalFile(filePath, requireDatabaseUrl(cfg.databaseUrl));
+    if (args.json) {
+      printJson(formatIngestJson(result));
+    } else {
+      writeOut(formatIngestHuman(result));
+    }
+    return EXIT.ok;
+  }
+
+  if (command === "search") {
+    const query = args.positional[1];
+    if (query === undefined || query.length === 0) {
+      usage("usage: kb search <query>");
+    }
+    const retriever = new FulltextRetriever(requireDatabaseUrl(cfg.databaseUrl));
+    const response = await retriever.search(toSearchQuery(query, args));
+    if (args.json) {
+      printJson(formatSearchJson(response));
+    } else {
+      writeOut(formatSearchHuman(response));
+    }
+    return EXIT.ok;
+  }
+
+  if (command === "get") {
+    const id = args.positional[1];
+    if (id === undefined) {
+      usage("usage: kb get <id>");
+    }
+    const doc = await getDocument(id, requireDatabaseUrl(cfg.databaseUrl));
+    if (args.json) {
+      printJson(formatGetJson(doc));
+    } else {
+      writeOut(formatGetHuman(doc));
+    }
+    return EXIT.ok;
+  }
+
+  if (command === "tags") {
+    const rows = await listTags(requireDatabaseUrl(cfg.databaseUrl));
+    if (args.json) {
+      printJson(rows);
+    } else {
+      writeOut(formatTagsHuman(rows));
+    }
+    return EXIT.ok;
+  }
+
+  if (command === "doctor") {
+    const report = await doctorReport({
+      databaseUrl: cfg.databaseUrl,
+      teiUrl: cfg.teiUrl,
+      ollamaUrl: cfg.ollamaUrl,
+    });
+    if (args.json) {
+      printJson(report);
+    } else {
+      writeOut(formatDoctorHuman(report));
+    }
+    return report.ok ? EXIT.ok : EXIT.unavailable;
+  }
+
+  usage(`unknown command: ${command}`);
+}
+
+export async function runCli(argv: string[]): Promise<number> {
+  try {
+    return await dispatch(argv);
+  } catch (error) {
+    if (error instanceof CliExit) {
+      writeErr(`${error.message}\n`);
+      return error.code;
+    }
+    if (error instanceof NotFoundError) {
+      writeErr(`${error.message}\n`);
+      return EXIT.notFound;
+    }
+    if (error instanceof DependencyError) {
+      writeErr(`${error.message}\n`);
+      return EXIT.unavailable;
+    }
+    const message = error instanceof Error ? error.message : String(error);
+    writeErr(`${message}\n`);
+    return EXIT.error;
+  }
+}

@@ -1,6 +1,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { DependencyError } from "../errors.ts";
 
 export function repoRootFrom(moduleUrl: string): string {
   let dir = dirname(fileURLToPath(moduleUrl));
@@ -41,7 +42,7 @@ export function loadEnvFiles(root: string): void {
 export function databaseUrl(): string {
   const url = process.env.KB_DATABASE_URL;
   if (url === undefined || url.length === 0) {
-    throw new Error("KB_DATABASE_URL is not set");
+    throw new DependencyError("KB_DATABASE_URL is not set");
   }
   return url;
 }

@@ -2,7 +2,13 @@ export const PACKAGE_NAME = "@summer-sum/core";
 
 export * from "./db/schema.ts";
 export { runMigrations } from "./db/migrate.ts";
+export { loadEnvFiles, repoRootFrom, databaseUrl } from "./db/env.ts";
 export { ingestLocalFile } from "./ingest/file.ts";
 export type { IngestFileResult } from "./ingest/file.ts";
 export { FulltextRetriever } from "./retrieve/fulltext.ts";
 export type { Retriever, SearchQuery, SearchResponse } from "./retrieve/types.ts";
+export { getDocument, listTags } from "./documents/access.ts";
+export type { DocumentRecord } from "./documents/access.ts";
+export { NotFoundError, DependencyError } from "./errors.ts";
+export { doctorReport } from "./health/doctor.ts";
+export type { DoctorReport } from "./health/doctor.ts";

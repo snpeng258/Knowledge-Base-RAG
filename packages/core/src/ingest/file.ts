@@ -3,6 +3,7 @@ import { and, eq, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 import { chunks, documents, ingestRuns } from "../db/schema.ts";
+import { DependencyError, isUnavailableMessage } from "../errors.ts";
 import { splitIntoChunks } from "./chunk.ts";
 import { sha256 } from "./hash.ts";
 import { canonicalLocalPath, slugFromFilePath } from "./slug.ts";
@@ -19,8 +20,19 @@ type Db = ReturnType<typeof drizzle>;
 type QueryDb = Pick<Db, "select" | "insert" | "update" | "delete">;
 
 function openDb(url: string) {
-  const client = postgres(url, { max: 1, onnotice: () => undefined });
+  const client = postgres(url, { max: 1, onnotice: () => undefined, connect_timeout: 3 });
   return { client, db: drizzle(client) };
+}
+
+function wrapIngestError(error: unknown): never {
+  if (error instanceof DependencyError) {
+    throw error;
+  }
+  const message = error instanceof Error ? error.message : String(error);
+  if (isUnavailableMessage(message)) {
+    throw new DependencyError(`database unavailable: ${message}`);
+  }
+  throw error;
 }
 
 export async function ingestLocalFile(
@@ -37,43 +49,46 @@ export async function ingestLocalFile(
   }
 
   const { client, db } = openDb(databaseUrl);
-  const [run] = await db
-    .insert(ingestRuns)
-    .values({
-      sourceKind: "local_file",
-      startedAt: new Date(),
-      status: "running",
-    })
-    .returning({ id: ingestRuns.id });
-  if (run === undefined) {
-    await client.end();
-    throw new Error("failed to create ingest_runs row");
-  }
-
   try {
-    const result = await db.transaction((tx) => writeDocument(tx, absolutePath, content));
-    await db
-      .update(ingestRuns)
-      .set({
-        finishedAt: new Date(),
-        docCount: 1,
-        status: "success",
+    const [run] = await db
+      .insert(ingestRuns)
+      .values({
+        sourceKind: "local_file",
+        startedAt: new Date(),
+        status: "running",
       })
-      .where(eq(ingestRuns.id, run.id));
-    return { ...result, ingestRunId: String(run.id) };
+      .returning({ id: ingestRuns.id });
+    if (run === undefined) {
+      throw new Error("failed to create ingest_runs row");
+    }
+
+    try {
+      const result = await db.transaction((tx) => writeDocument(tx, absolutePath, content));
+      await db
+        .update(ingestRuns)
+        .set({
+          finishedAt: new Date(),
+          docCount: 1,
+          status: "success",
+        })
+        .where(eq(ingestRuns.id, run.id));
+      return { ...result, ingestRunId: String(run.id) };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      await db
+        .update(ingestRuns)
+        .set({
+          finishedAt: new Date(),
+          status: "failed",
+          error: message,
+        })
+        .where(eq(ingestRuns.id, run.id));
+      wrapIngestError(error);
+    }
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    await db
-      .update(ingestRuns)
-      .set({
-        finishedAt: new Date(),
-        status: "failed",
-        error: message,
-      })
-      .where(eq(ingestRuns.id, run.id));
-    throw error;
+    wrapIngestError(error);
   } finally {
-    await client.end();
+    await client.end({ timeout: 1 });
   }
 }
 

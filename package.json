@@ -8,8 +8,9 @@
   },
   "scripts": {
     "typecheck": "tsc --noEmit -p tsconfig.json",
-    "test": "pnpm --filter @summer-sum/core test",
-    "db:migrate": "node --experimental-strip-types ./packages/core/src/db/migrate.ts"
+    "test": "pnpm --filter @summer-sum/core test && pnpm --filter @summer-sum/cli test",
+    "db:migrate": "node --experimental-strip-types ./packages/core/src/db/migrate.ts",
+    "kb": "node --experimental-strip-types ./apps/cli/src/index.ts"
   },
   "devDependencies": {
     "@types/node": "^24.3.0",

@@ -3,8 +3,12 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
+  "bin": {
+    "kb": "./src/index.ts"
+  },
   "scripts": {
-    "typecheck": "tsc --noEmit -p ../../tsconfig.json"
+    "typecheck": "tsc --noEmit -p ../../tsconfig.json",
+    "test": "node --test --experimental-strip-types src/format.test.ts src/run.test.ts"
   },
   "dependencies": {
     "@summer-sum/core": "workspace:*"

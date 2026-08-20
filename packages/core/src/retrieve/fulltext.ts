@@ -1,4 +1,5 @@
 import postgres from "postgres";
+import { toDependencyError } from "../errors.ts";
 import { queryTokens, toTsQuery } from "./query.ts";
 import type { Retriever, SearchCard, SearchHit, SearchQuery, SearchResponse } from "./types.ts";
 
@@ -20,7 +21,7 @@ export class FulltextRetriever implements Retriever {
     }
 
     const requiredTags = input.tags ?? [];
-    const sql = postgres(this.databaseUrl, { max: 1, onnotice: () => undefined });
+    const sql = postgres(this.databaseUrl, { max: 1, onnotice: () => undefined, connect_timeout: 3 });
     try {
       const rows = await sql<
         {
@@ -83,8 +84,10 @@ export class FulltextRetriever implements Retriever {
         total: results.length,
         results,
       };
+    } catch (error) {
+      toDependencyError(error, "search failed");
     } finally {
-      await sql.end();
+      await sql.end({ timeout: 1 });
     }
   }
 }
