@@ -160,7 +160,10 @@ kb doctor --json     # 结构化，供脚本判断
 |---|---|
 | `KB_DATABASE_URL` | 本地模式的 Postgres 连接串 |
 | `KB_REMOTE_URL` | 远程模式的 API 地址 |
-| `KB_REMOTE_TOKEN` | 远程模式的凭据 |
+| `KB_REMOTE_TOKEN` | 远程模式的凭据（`Authorization: Bearer`） |
+| `KB_API_TOKEN` | API 进程校验的共享密钥，与客户端 `KB_REMOTE_TOKEN` 同值 |
+| `KB_API_HOST` | API 监听地址，默认 `127.0.0.1` |
+| `KB_API_PORT` | API 端口，默认 `8787` |
 | `KB_TEI_URL` | TEI 容器地址，默认 `http://localhost:8080` |
 | `KB_EMBED_MODEL` | 灌入时记录的 embedding 模型名，默认 `BAAI/bge-m3`；以 TEI `/info` 的 `model_id` 为准 |
 | `KB_RERANK_ENABLED` | 是否对召回结果做 Stage 3 重排，默认 `0`。评测未见排序收益，见 [eval-rerank-2026-08-21.md](../audits/eval-rerank-2026-08-21.md) |
@@ -175,7 +178,7 @@ kb doctor --json     # 结构化，供脚本判断
 
 非技术同事的完整配置只有两项：`KB_REMOTE_URL` 与 `KB_REMOTE_TOKEN`。这是选择 monorepo 架构的原因（ADR-001 D2）。
 
-> 远程模式在 Loop 9 才实现。在此之前 `--remote` 应返回退出码 2 并给出明确提示，**不允许静默忽略参数**。
+> 远程模式：`--remote` 或设置 `KB_REMOTE_URL` 时，`search` / `get` / `tags list` 走 HTTP API，不需要本机 `KB_DATABASE_URL`。入库命令仍是本地。启动 API：`pnpm api`（需 `KB_API_TOKEN` 与 `KB_DATABASE_URL`）。HTTP 路径：`GET /health`（无鉴权）、`GET /tags`、`GET /search?query=`、`GET /documents/:id`。不可达退出码 3；凭据错误退出码 1。
 
 ### 3.8 人类可读输出
 

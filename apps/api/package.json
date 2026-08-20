@@ -1,0 +1,14 @@
+{
+  "name": "@summer-sum/api",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc --noEmit -p ../../tsconfig.json",
+    "test": "node --test --test-concurrency=1 --experimental-strip-types src/server.test.ts",
+    "start": "node --experimental-strip-types ./src/index.ts"
+  },
+  "dependencies": {
+    "@summer-sum/core": "workspace:*"
+  }
+}

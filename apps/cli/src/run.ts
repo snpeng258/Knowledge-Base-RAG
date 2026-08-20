@@ -19,6 +19,7 @@ import { parseArgs, parseDateFlag } from "./args.ts";
 import { CliExit, EXIT, usage, batchIngestExit } from "./exit.ts";
 import { startMcpStdio } from "./mcp.ts";
 import { getKnowledge, listKnowledgeTags, searchKnowledge } from "./read.ts";
+import { RemoteAuthError, remoteGet, remoteSearch, remoteTags } from "./remote.ts";
 import {
   formatDoctorHuman,
   formatGetHuman,
@@ -46,7 +47,7 @@ function loadConfig(args: ReturnType<typeof parseArgs>) {
     databaseUrl: args.databaseUrl ?? process.env.KB_DATABASE_URL ?? "",
     teiUrl: args.teiUrl ?? process.env.KB_TEI_URL ?? "http://localhost:8080",
     ollamaUrl: args.ollamaUrl ?? process.env.KB_OLLAMA_URL ?? "http://localhost:11434",
-    remoteUrl: process.env.KB_REMOTE_URL,
+    remoteUrl: process.env.KB_REMOTE_URL ?? "",
     root,
   };
 }
@@ -81,8 +82,8 @@ function toSearchQuery(query: string, args: ReturnType<typeof parseArgs>): Searc
 async function dispatch(argv: string[]): Promise<number> {
   const args = parseArgs(argv);
   const cfg = loadConfig(args);
-  if (args.remote || (cfg.remoteUrl !== undefined && cfg.remoteUrl.length > 0)) {
-    usage("remote mode is not implemented yet; omit --remote and KB_REMOTE_URL to use the local database");
+  if (args.remote || cfg.remoteUrl.length > 0) {
+    return await dispatchRemote(args, cfg);
   }
   const command = args.positional[0];
   if (command === undefined) {
@@ -295,6 +296,82 @@ async function dispatch(argv: string[]): Promise<number> {
   usage(`unknown command: ${command}`);
 }
 
+async function dispatchRemote(args: ReturnType<typeof parseArgs>, cfg: ReturnType<typeof loadConfig>): Promise<number> {
+  if (cfg.remoteUrl.length === 0) {
+    usage("remote mode needs KB_REMOTE_URL");
+  }
+  const token = process.env.KB_REMOTE_TOKEN ?? "";
+  if (token.length === 0) {
+    throw new RemoteAuthError("KB_REMOTE_TOKEN is not set (credential)");
+  }
+  const remote = { remoteUrl: cfg.remoteUrl.replace(/\/$/, ""), token };
+  const command = args.positional[0];
+  if (command === undefined) {
+    usage("usage: kb <search|get|tags> [...]");
+  }
+  if (command === "search") {
+    const query = args.positional[1];
+    if (query === undefined || query.length === 0) {
+      usage("usage: kb search <query>");
+    }
+    const payload = await remoteSearch(toSearchQuery(query, args), remote);
+    if (args.json) {
+      printJson(payload);
+    } else {
+      writeOut(formatRemoteSearchHuman(payload));
+    }
+    return EXIT.ok;
+  }
+  if (command === "get") {
+    const id = args.positional[1];
+    if (id === undefined) {
+      usage("usage: kb get <id>");
+    }
+    const doc = await remoteGet(id, remote);
+    if (args.json) {
+      printJson(doc);
+    } else {
+      writeOut(`${JSON.stringify(doc, null, 2)}\n`);
+    }
+    return EXIT.ok;
+  }
+  if (command === "tags") {
+    const sub = args.positional[1];
+    if (sub === undefined || sub === "list") {
+      const rows = await remoteTags(remote);
+      if (args.json) {
+        printJson(rows);
+      } else if (Array.isArray(rows)) {
+        writeOut(formatTagsHuman(rows as { slug: string; name: string; description?: string | null }[]));
+      } else {
+        writeOut(`${JSON.stringify(rows, null, 2)}\n`);
+      }
+      return EXIT.ok;
+    }
+    usage("remote mode only supports kb tags list");
+  }
+  usage("remote mode only supports search, get, and tags list");
+}
+
+function formatRemoteSearchHuman(payload: unknown): string {
+  if (typeof payload !== "object" || payload === null) {
+    return `${JSON.stringify(payload)}\n`;
+  }
+  const results = (payload as { results?: unknown }).results;
+  if (!Array.isArray(results) || results.length === 0) {
+    return "No results.\n";
+  }
+  const lines: string[] = [];
+  for (const row of results) {
+    if (typeof row !== "object" || row === null) {
+      continue;
+    }
+    const card = row as Record<string, unknown>;
+    lines.push(`${String(card.id)}  [${String(card.kind)}]  ${String(card.title)}`);
+  }
+  return `${lines.join("\n")}\n`;
+}
+
 export async function runCli(argv: string[]): Promise<number> {
   try {
     return await dispatch(argv);
@@ -306,6 +383,10 @@ export async function runCli(argv: string[]): Promise<number> {
     if (error instanceof NotFoundError) {
       writeErr(`${error.message}\n`);
       return EXIT.notFound;
+    }
+    if (error instanceof RemoteAuthError) {
+      writeErr(`${error.message}\n`);
+      return EXIT.error;
     }
     if (error instanceof DependencyError) {
       writeErr(`${error.message}\n`);

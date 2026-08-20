@@ -8,7 +8,7 @@
   },
   "scripts": {
     "typecheck": "tsc --noEmit -p ../../tsconfig.json",
-    "test": "node --test --test-concurrency=1 --experimental-strip-types src/format.test.ts src/run.test.ts src/exit.test.ts src/mcp.test.ts"
+    "test": "node --test --test-concurrency=1 --experimental-strip-types src/format.test.ts src/run.test.ts src/exit.test.ts src/mcp.test.ts src/remote.test.ts"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.30.0",

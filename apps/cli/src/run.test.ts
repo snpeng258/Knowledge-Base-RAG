@@ -48,10 +48,10 @@ test("unknown get id is exit 4", () => {
   assert.equal(result.status, EXIT.notFound);
 });
 
-test("remote flag is usage exit 2 and is not ignored", () => {
+test("remote search without a url is usage exit 2", () => {
   const result = kb(["search", "x", "--remote"]);
   assert.equal(result.status, EXIT.usage);
-  assert.match(result.stderr, /remote mode is not implemented/);
+  assert.match(result.stderr, /KB_REMOTE_URL/);
 });
 
 test("empty search results still exit 0", () => {

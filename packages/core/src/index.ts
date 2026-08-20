@@ -18,6 +18,7 @@ export { rerankOptionsFromEnv } from "./rerank/config.ts";
 export type { HybridRerankOptions, Reranker } from "./rerank/types.ts";
 export { getDocument, listTags } from "./documents/access.ts";
 export type { DocumentRecord } from "./documents/access.ts";
+export { formatSearchJson, formatGetJson } from "./present/json.ts";
 export { NotFoundError, DependencyError } from "./errors.ts";
 export { doctorReport } from "./health/doctor.ts";
 export type { DoctorReport } from "./health/doctor.ts";

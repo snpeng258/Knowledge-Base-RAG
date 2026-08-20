@@ -8,9 +8,10 @@
   },
   "scripts": {
     "typecheck": "tsc --noEmit -p tsconfig.json",
-    "test": "pnpm --filter @summer-sum/core test && pnpm --filter @summer-sum/cli test",
+    "test": "pnpm --filter @summer-sum/core test && pnpm --filter @summer-sum/cli test && pnpm --filter @summer-sum/api test",
     "db:migrate": "node --experimental-strip-types ./packages/core/src/db/migrate.ts",
     "kb": "node --experimental-strip-types ./apps/cli/src/index.ts",
+    "api": "node --experimental-strip-types ./apps/api/src/index.ts",
     "eval": "pnpm --filter @summer-sum/core eval"
   },
   "devDependencies": {
