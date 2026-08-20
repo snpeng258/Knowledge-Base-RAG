@@ -24,7 +24,7 @@
 2. `kb search <query>` —— 返回文档级卡片（id、标题、一句话摘要、标签、命中片段）
 3. `kb get <id>` —— 判断相关后，按 id 精确取全文
 
-这套接口同时服务人和 AI Agent（`--json` 输出 + MCP server）。
+这套接口同时服务人和 AI Agent（`--json` 输出 + MCP server）。MCP 接入见 [docs/ops/mcp.md](docs/ops/mcp.md)。
 
 ## 技术栈
 

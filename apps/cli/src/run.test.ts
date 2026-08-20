@@ -55,7 +55,7 @@ test("remote flag is usage exit 2 and is not ignored", () => {
 });
 
 test("empty search results still exit 0", () => {
-  const result = kb(["search", "xyzzy-no-such-token", "--json"]);
+  const result = kb(["search", "xyzzy-eval-no-hit-token", "--json"]);
   assert.equal(result.status, EXIT.ok);
   const body = JSON.parse(result.stdout) as { results: unknown[] };
   assert.equal(body.results.length, 0);
@@ -202,7 +202,7 @@ test("pnpm kb forwards arguments including --json", () => {
     "--experimental-strip-types",
     resolve(root, "apps/cli/src/index.ts"),
     "search",
-    "xyzzy-no-such-token",
+    "xyzzy-eval-no-hit-token",
     "--json",
   ], {
     cwd: root,
@@ -213,7 +213,7 @@ test("pnpm kb forwards arguments including --json", () => {
   const body = JSON.parse(spawned.stdout) as { results: unknown[] };
   assert.equal(body.results.length, 0);
 
-  const viaPnpm = spawnSync("pnpm", ["kb", "search", "xyzzy-no-such-token", "--json"], {
+  const viaPnpm = spawnSync("pnpm", ["kb", "search", "xyzzy-eval-no-hit-token", "--json"], {
     cwd: root,
     encoding: "utf8",
     shell: true,

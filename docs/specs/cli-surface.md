@@ -183,6 +183,12 @@ kb doctor --json     # 结构化，供脚本判断
 
 强制要求（`code-style.md`「错误要可见」）：失败时必须给出可定位的信息——涉及的 id、实际查询、文件路径或 URL。禁止空 catch，禁止只打印 `Error`。
 
+### 3.9 MCP（stdio）
+
+`kb mcp` 启动只读 MCP server。工具名：`tags` / `search` / `get`。返回 JSON 与对应 CLI `--json` 契约相同。search **不含** `content`。
+
+接入配置见 [docs/ops/mcp.md](../ops/mcp.md)。启动命令必须用 `node --experimental-strip-types …/apps/cli/src/index.ts mcp`，不要用 `pnpm kb mcp`（pnpm 会污染 stdout）。
+
 ---
 
 ## 4. 验收命令

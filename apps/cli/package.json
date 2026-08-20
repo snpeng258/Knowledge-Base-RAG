@@ -8,9 +8,11 @@
   },
   "scripts": {
     "typecheck": "tsc --noEmit -p ../../tsconfig.json",
-    "test": "node --test --experimental-strip-types src/format.test.ts src/run.test.ts src/exit.test.ts"
+    "test": "node --test --test-concurrency=1 --experimental-strip-types src/format.test.ts src/run.test.ts src/exit.test.ts src/mcp.test.ts"
   },
   "dependencies": {
-    "@summer-sum/core": "workspace:*"
+    "@modelcontextprotocol/sdk": "^1.30.0",
+    "@summer-sum/core": "workspace:*",
+    "zod": "^4.4.3"
   }
 }

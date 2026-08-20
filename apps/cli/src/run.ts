@@ -1,15 +1,11 @@
 import {
   DependencyError,
   doctorReport,
-  HybridRetriever,
-  rerankOptionsFromEnv,
-  getDocument,
   ingestLocalFile,
   ingestLarkMinute,
   ingestUrls,
   listLarkMinutes,
   listTagProposals,
-  listTags,
   loadEnvFiles,
   NotFoundError,
   approveTagProposal,
@@ -21,6 +17,8 @@ import {
 import type { SearchQuery } from "@summer-sum/core";
 import { parseArgs, parseDateFlag } from "./args.ts";
 import { CliExit, EXIT, usage, batchIngestExit } from "./exit.ts";
+import { startMcpStdio } from "./mcp.ts";
+import { getKnowledge, listKnowledgeTags, searchKnowledge } from "./read.ts";
 import {
   formatDoctorHuman,
   formatGetHuman,
@@ -88,7 +86,7 @@ async function dispatch(argv: string[]): Promise<number> {
   }
   const command = args.positional[0];
   if (command === undefined) {
-    usage("usage: kb <ingest|search|get|tags|doctor|embed> [...]");
+    usage("usage: kb <ingest|search|get|tags|doctor|embed|mcp> [...]");
   }
 
   if (command === "ingest") {
@@ -167,17 +165,20 @@ async function dispatch(argv: string[]): Promise<number> {
     return EXIT.ok;
   }
 
+  if (command === "mcp") {
+    await startMcpStdio({ databaseUrl: cfg.databaseUrl, teiUrl: cfg.teiUrl });
+    return EXIT.ok;
+  }
+
   if (command === "search") {
     const query = args.positional[1];
     if (query === undefined || query.length === 0) {
       usage("usage: kb search <query>");
     }
-    const retriever = new HybridRetriever(
-      requireDatabaseUrl(cfg.databaseUrl),
-      new TeiEmbedder(cfg.teiUrl, process.env.KB_EMBED_MODEL ?? "BAAI/bge-m3"),
-      rerankOptionsFromEnv(),
-    );
-    const response = await retriever.search(toSearchQuery(query, args));
+    const response = await searchKnowledge(toSearchQuery(query, args), {
+      databaseUrl: cfg.databaseUrl,
+      teiUrl: cfg.teiUrl,
+    });
     if (args.json) {
       printJson(formatSearchJson(response));
     } else {
@@ -191,7 +192,7 @@ async function dispatch(argv: string[]): Promise<number> {
     if (id === undefined) {
       usage("usage: kb get <id>");
     }
-    const doc = await getDocument(id, requireDatabaseUrl(cfg.databaseUrl));
+    const doc = await getKnowledge(id, { databaseUrl: cfg.databaseUrl, teiUrl: cfg.teiUrl });
     if (args.json) {
       printJson(formatGetJson(doc));
     } else {
@@ -204,7 +205,7 @@ async function dispatch(argv: string[]): Promise<number> {
     const dbUrl = requireDatabaseUrl(cfg.databaseUrl);
     const sub = args.positional[1];
     if (sub === undefined || sub === "list") {
-      const rows = await listTags(dbUrl);
+      const rows = await listKnowledgeTags({ databaseUrl: dbUrl, teiUrl: cfg.teiUrl });
       if (args.json) {
         printJson(rows);
       } else {

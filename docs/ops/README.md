@@ -12,10 +12,11 @@
 - 环境变量与密钥管理
 - 故障排查
 
-当前没有部署实现，本目录仅占位。禁止把 EdgeOne Pages / Next.js SSG 指南直接拷进来充当现行文档。
+当前没有部署实现。本地 MCP 接入见 [mcp.md](./mcp.md)。禁止把 EdgeOne Pages / Next.js SSG 指南直接拷进来充当现行文档。
 
 ## 文件命名
 
+- `mcp.md` — Cursor / Claude Code 接入 MCP
 - `local-setup.md` — 本地环境
 - `deploy.md` — 部署（平台确定后再命名可更具体）
 - `env-config.md` — 环境变量
