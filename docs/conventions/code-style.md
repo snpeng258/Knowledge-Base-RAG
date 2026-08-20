@@ -1,12 +1,12 @@
 # 代码风格规范
 
 > Created: 2026-08-20
-> Updated: 2026-08-20
+> Updated: 2026-08-21
 >
 > 本文档是 `AGENTS.md` 中代码风格条款的完整版。
 > 长度与文件组织见 [code-size-and-organization.md](./code-size-and-organization.md)。
 >
-> 语言、框架、样式方案未定。此处只保留**跨栈仍成立**的约定。框架细则（组件模型、CSS 方案、类型检查命令）等决策后再开专文，不在此预写 Next.js / React / Tailwind 规则。
+> 语言已定为 **TypeScript**（strict），见 [ADR-001](../designs/adr-001-tech-stack-and-architecture.md)。**Web UI 框架与样式方案仍未定**——不要在此预写 Next.js / React / Tailwind 规则，等 Web 阶段决策后另开专文。
 
 ## 命名与结构
 
@@ -25,7 +25,8 @@
 
 - 新行为要有可重复验证手段（测试、最小脚本或手工验收步骤写进 PR）
 - 在测试/lint 工具引入之前，不假装已经有 CI 绿灯
-- 有类型系统时：strict；禁止把类型检查关掉当功能开关；禁止滥用逃生类型（如 `any`），用未知类型 + 收窄
+- TypeScript strict；禁止把类型检查关掉当功能开关；禁止 `any`（含 `as any`），用 `unknown` + 类型收窄
+- `pnpm typecheck` 与 `pnpm test` 必须通过，不得用忽略规则或跳过标记糊过去
 - 错误要可见：失败时给出能定位的信息（来源 id、查询、文件路径），不要空 catch
 
 ## 安全与数据边界

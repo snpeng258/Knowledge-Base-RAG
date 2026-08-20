@@ -16,14 +16,37 @@
 - **CLI**：本地命令行检索，不依赖打开网页
 - **Web UI**：搜索框 + 卡片结果（筛选与时间轴为后续）
 
-### 研究方向
+### 检索方式
 
-- 语言、框架、仓库形态（monorepo / 分目录）、检索实现（关键词 / 向量）、部署平台均**尚未决策**，见方向草案第 9 节。
-- 本期明确不做：微信/飞书聊天记录导入、查询时实时爬网页、把 LLM 作为检索前提。
+核心交互是**渐进式披露**，而非把检索碎片一次性塞进 AI 上下文：
+
+1. `kb tags` —— 先了解知识库有哪些维度
+2. `kb search <query>` —— 返回文档级卡片（id、标题、一句话摘要、标签、命中片段）
+3. `kb get <id>` —— 判断相关后，按 id 精确取全文
+
+这套接口同时服务人和 AI Agent（`--json` 输出 + MCP server）。
 
 ## 技术栈
 
-**未定。** 不要从本 README 或历史脚手架推断为 Next.js / EdgeOne。架构决策将写入 `docs/designs/` 与 `docs/specs/`，并回填本节。
+架构已于 2026-08-21 拍板，完整决策与理由见 [ADR-001](docs/designs/adr-001-tech-stack-and-architecture.md)。
+
+| 层 | 选型 |
+| --- | --- |
+| 语言 / 运行时 | TypeScript + Node.js（strict） |
+| 仓库形态 | pnpm workspace monorepo：`packages/core` + `apps/{cli,api,web}` |
+| 数据库 | PostgreSQL + pgvector（本地 Docker） |
+| 全文检索 | Postgres `tsvector`，中文分词走 Node 内置 `Intl.Segmenter` |
+| 向量 / 重排 | TEI 容器（本地，OpenAI 兼容接口） |
+| 入库提炼 | 本地 Ollama（`qwen3:8b`），provider 可插拔 |
+
+**仍未决策**：Web UI 框架、部署平台、线上鉴权。选了 TypeScript **不等于**默认 Next.js。
+
+### 设计要点
+
+- **读写路径分离**：LLM 只在入库时参与（生成摘要与标签）；检索路径无模型依赖，因此毫秒级、零成本、可写自动化测试
+- **三层检索**：全文+标签 → 向量 → 重排，接口可替换，全文层永远作为兜底
+- **回到原文**：切片存字符偏移量；会议切片额外存说话人与时间戳
+- **语料边界**：飞书官方 API 可读妙记/纪要与群内链接文件；**任何人的聊天发言原文不入库**
 
 ## 仓库约定
 
@@ -37,20 +60,25 @@
 
 ## 快速开始
 
-应用代码尚未落地。当前可做的事：
+> 应用骨架正在落地中，部分命令尚不可用。前置要求：Node 22+、pnpm 10+、Docker。
 
-1. 阅读 [docs/designs/working-direction.md](docs/designs/working-direction.md)
-2. 阅读 [AGENTS.md](./AGENTS.md)
-3. 架构决策后再补安装与运行命令
+```powershell
+pnpm install
+docker compose up -d        # Postgres + pgvector
+pnpm db:migrate
+pnpm kb doctor              # 检查各依赖是否就绪
+```
+
+先读这三份文档再动手：[ADR-001](docs/designs/adr-001-tech-stack-and-architecture.md)（架构约束）、[AGENTS.md](./AGENTS.md)（操作索引）、[working-direction.md](docs/designs/working-direction.md)（产品方向）。
 
 ## 文档
 
 | 路径 | 用途 |
 | --- | --- |
-| [docs/designs/](./docs/designs/) | 方向草案、方案对比、架构决策 |
+| [docs/designs/](./docs/designs/) | 架构决策（ADR）、方向草案、方案对比 |
+| [docs/plans/](./docs/plans/) | 推进机制、计划与里程碑 |
+| [docs/specs/](./docs/specs/) | 数据模型、CLI 命令面等技术规格 |
 | [docs/conventions/](./docs/conventions/) | 编码与协作规范 |
-| [docs/plans/](./docs/plans/) | 计划与里程碑 |
-| [docs/specs/](./docs/specs/) | 技术规格 |
 | [docs/ops/](./docs/ops/) | 本地运行与部署（待写） |
 
 ## License
