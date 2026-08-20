@@ -149,3 +149,18 @@ temp/
 *.wma
 *.mp3
 *.m4a
+
+# ========================
+# Corpus — real meeting transcripts, parsed links, Lark exports stay off-git.
+# Tests use the de-identified fixtures under fixtures/ instead.
+# ========================
+/corpus/
+!/corpus/.gitkeep
+/fixtures/real/
+
+# ========================
+# Local service & model data (Postgres volume, TEI model cache)
+# ========================
+/pgdata/
+/.tei-data/
+/.ollama/
