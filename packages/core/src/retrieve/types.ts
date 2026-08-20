@@ -30,7 +30,7 @@ export type SearchCard = {
 
 export type SearchResponse = {
   query: string;
-  stage: "fulltext" | "vector" | "hybrid";
+  stage: "fulltext" | "vector" | "hybrid" | "rerank";
   degraded: boolean;
   total: number;
   results: SearchCard[];

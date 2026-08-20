@@ -9,6 +9,7 @@ import type { Retriever } from "../retrieve/types.ts";
 import { embedMissingChunks } from "../embed/ingest.ts";
 import { TeiEmbedder } from "../embed/tei.ts";
 import { FulltextRetriever } from "../retrieve/fulltext.ts";
+import { rerankOptionsFromEnv } from "../rerank/config.ts";
 import { HybridRetriever } from "../retrieve/hybrid.ts";
 import { formatEvalHuman, formatEvalJson } from "./format.ts";
 import { classifyCase, expectedHit, summarize } from "./types.ts";
@@ -45,7 +46,13 @@ export async function runEval(url: string, root: string, retriever?: Retriever):
     await attachTags(url, ingested.documentId, entry.tags);
   }
 
-  const active = retriever ?? new HybridRetriever(url, new TeiEmbedder(process.env.KB_TEI_URL ?? "http://localhost:8080"));
+  const active =
+    retriever ??
+    new HybridRetriever(
+      url,
+      new TeiEmbedder(process.env.KB_TEI_URL ?? "http://localhost:8080"),
+      rerankOptionsFromEnv(),
+    );
   if (!(active instanceof FulltextRetriever)) {
     try {
       await embedMissingChunks(url, new TeiEmbedder(process.env.KB_TEI_URL ?? "http://localhost:8080"));
@@ -69,9 +76,7 @@ export async function runEval(url: string, root: string, retriever?: Retriever):
       ...(evalCase.tags !== undefined && evalCase.tags.length > 0 ? { tags: evalCase.tags } : {}),
     });
     const actualIds = response.results.map((card) => card.id).filter((id) => corpusIds.has(id));
-    if (response.stage === "hybrid" || response.stage === "fulltext") {
-      stage = response.stage;
-    }
+    stage = preferStage(stage, response.stage);
     results.push({
       id: evalCase.id,
       category: evalCase.category,
@@ -84,6 +89,17 @@ export async function runEval(url: string, root: string, retriever?: Retriever):
     });
   }
   return summarize(results, stage);
+}
+
+function preferStage(
+  current: EvalReport["stage"],
+  next: "fulltext" | "vector" | "hybrid" | "rerank",
+): EvalReport["stage"] {
+  const rank = { fulltext: 0, vector: 1, hybrid: 1, rerank: 2 } as const;
+  if (next !== "fulltext" && next !== "hybrid" && next !== "rerank") {
+    return current;
+  }
+  return rank[next] > rank[current] ? next : current;
 }
 
 async function main(): Promise<void> {

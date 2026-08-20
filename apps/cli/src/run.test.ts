@@ -133,6 +133,20 @@ test("ingest file, search, get, tags, and doctor work", async () => {
   assert.equal(degradedBody.stage, "fulltext");
   assert.equal(degradedBody.degraded, true);
   assert.ok(degradedBody.results.length > 0);
+
+  const searchRerankDown = kb(["search", "产品力", "--json"], {
+    ...process.env,
+    KB_RERANK_ENABLED: "1",
+    KB_RERANK_URL: "http://127.0.0.1:1",
+    KB_RERANK_TIMEOUT_MS: "400",
+  });
+  assert.equal(searchRerankDown.status, EXIT.ok, searchRerankDown.stderr);
+  const rerankDownBody = JSON.parse(searchRerankDown.stdout) as {
+    stage: string;
+    results: unknown[];
+  };
+  assert.notEqual(rerankDownBody.stage, "rerank");
+  assert.ok(rerankDownBody.results.length > 0);
 });
 
 test("embed with unreachable tei is exit 3", () => {

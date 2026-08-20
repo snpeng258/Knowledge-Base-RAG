@@ -15,11 +15,11 @@ loadEnvFiles(repoRootFrom(import.meta.url));
 
 function mockEmbedder(): Embedder {
   return {
-    name: "mock-tei",
-    modelName: "BAAI/bge-m3",
+    name: "mock-embedder",
+    modelName: "embed-test-const",
     dim: 1024,
     async info() {
-      return { modelName: "BAAI/bge-m3" };
+      return { modelName: "embed-test-const" };
     },
     async embed(texts: string[]) {
       return texts.map(() => Array.from({ length: 1024 }, (_, index) => (index === 0 ? 0.05 : 0)));
@@ -55,7 +55,7 @@ test("embed missing chunks is incremental and creates the hnsw index", async () 
     `;
     assert.equal(embeddings[0]?.count, chunks[0]?.count);
     assert.equal(embeddings[0]?.dim, 1024);
-    assert.equal(embeddings[0]?.model_name, "BAAI/bge-m3");
+    assert.equal(embeddings[0]?.model_name, "embed-test-const");
     assert.ok(first.embedded > 0);
 
     const second = await embedMissingChunks(url, mockEmbedder());

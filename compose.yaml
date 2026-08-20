@@ -37,6 +37,24 @@ services:
       retries: 30
       start_period: 600s
 
+  # Separate CPU reranker. bge-m3 on :8080 cannot serve /rerank (TEI backend error).
+  # Same cpu-1.2 tag as embedding (candle). Do not default to the GPU profile.
+  tei-rerank:
+    image: ghcr.io/huggingface/text-embeddings-inference:cpu-1.2
+    container_name: summer-sum-tei-rerank
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8082:80"
+    volumes:
+      - ./.tei-rerank-data:/data
+    command: ["--model-id", "${KB_RERANK_MODEL:-BAAI/bge-reranker-v2-m3}"]
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://127.0.0.1:80/health >/dev/null || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 600s
+
   # Optional GPU profile. Image 120-1.9 is experimental for RTX 50-series (ADR-001 D5).
   # Do not enable unless a human has verified it on this machine:
   #   docker compose --profile gpu up -d tei-gpu

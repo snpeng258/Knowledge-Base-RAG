@@ -2,6 +2,7 @@ import {
   DependencyError,
   doctorReport,
   HybridRetriever,
+  rerankOptionsFromEnv,
   getDocument,
   ingestLocalFile,
   ingestLarkMinute,
@@ -174,6 +175,7 @@ async function dispatch(argv: string[]): Promise<number> {
     const retriever = new HybridRetriever(
       requireDatabaseUrl(cfg.databaseUrl),
       new TeiEmbedder(cfg.teiUrl, process.env.KB_EMBED_MODEL ?? "BAAI/bge-m3"),
+      rerankOptionsFromEnv(),
     );
     const response = await retriever.search(toSearchQuery(query, args));
     if (args.json) {

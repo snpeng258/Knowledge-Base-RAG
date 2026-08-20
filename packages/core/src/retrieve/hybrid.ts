@@ -1,5 +1,7 @@
 import postgres from "postgres";
 import type { Embedder } from "../embed/types.ts";
+import { cardRerankText, reorderCards } from "../rerank/order.ts";
+import type { HybridRerankOptions, Reranker } from "../rerank/types.ts";
 import { FulltextRetriever } from "./fulltext.ts";
 import type { Retriever, SearchCard, SearchHit, SearchQuery, SearchResponse } from "./types.ts";
 
@@ -11,11 +13,13 @@ export class HybridRetriever implements Retriever {
   private readonly databaseUrl: string;
   private readonly embedder: Embedder;
   private readonly fulltext: FulltextRetriever;
+  private readonly rerank: HybridRerankOptions;
 
-  constructor(databaseUrl: string, embedder: Embedder) {
+  constructor(databaseUrl: string, embedder: Embedder, rerank: HybridRerankOptions = {}) {
     this.databaseUrl = databaseUrl;
     this.embedder = embedder;
     this.fulltext = new FulltextRetriever(databaseUrl);
+    this.rerank = rerank;
   }
 
   async search(input: SearchQuery): Promise<SearchResponse> {
@@ -40,13 +44,64 @@ export class HybridRetriever implements Retriever {
     }
     const vectorCards = await recallByVector(this.databaseUrl, input, modelName, queryVector);
     const fused = fuseRrf(lexical.results, vectorCards, input.limit ?? 10);
+    const reranked = await applyOptionalRerank(input.query, fused, this.rerank);
     return {
       query: input.query,
-      stage: "hybrid",
+      stage: reranked.used ? "rerank" : "hybrid",
       degraded: false,
-      total: fused.length,
-      results: fused,
+      total: reranked.cards.length,
+      results: reranked.cards,
     };
+  }
+}
+
+async function applyOptionalRerank(
+  query: string,
+  cards: SearchCard[],
+  options: HybridRerankOptions,
+): Promise<{ cards: SearchCard[]; used: boolean }> {
+  const reranker: Reranker | undefined = options.reranker;
+  if (options.enabled !== true || reranker === undefined || cards.length === 0) {
+    return { cards, used: false };
+  }
+  const timeoutMs = options.timeoutMs ?? 3000;
+  const candidateLimit = options.candidateLimit ?? 20;
+  const head = cards.slice(0, candidateLimit);
+  const tail = cards.slice(candidateLimit);
+  try {
+    const ranked = await withTimeout(
+      reranker.rerank({
+        query,
+        texts: head.map(cardRerankText),
+        timeoutMs,
+      }),
+      timeoutMs,
+    );
+    const inRange = ranked.some((row) => row.index >= 0 && row.index < head.length);
+    if (!inRange) {
+      return { cards, used: false };
+    }
+    return { cards: [...reorderCards(head, ranked), ...tail], used: true };
+  } catch {
+    // Read-path enhancement: keep recall order when the extra ranker is down.
+    return { cards, used: false };
+  }
+}
+
+async function withTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<T> {
+  void promise.then(undefined, () => undefined);
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  try {
+    return await Promise.race([
+      promise,
+      new Promise<T>((_, reject) => {
+        timer = setTimeout(() => reject(new Error("rank timeout")), timeoutMs);
+      }),
+    ]);
+  } finally {
+    if (timer !== undefined) {
+      clearTimeout(timer);
+    }
   }
 }
 

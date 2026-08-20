@@ -37,7 +37,7 @@ export type CaseResult = {
 };
 
 export type EvalReport = {
-  stage: "fulltext" | "hybrid";
+  stage: "fulltext" | "hybrid" | "rerank";
   total: number;
   pass: number;
   knownFail: number;

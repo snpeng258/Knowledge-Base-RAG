@@ -74,7 +74,7 @@ kb get mtg-2026-08-12-kickoff --json
 ```jsonc
 {
   "query": "产品力 技术力",
-  "stage": "fulltext",          // fulltext | vector | hybrid  —— 实际用了哪层检索
+  "stage": "fulltext",          // fulltext | vector | hybrid | rerank  —— 实际用了哪层检索
   "degraded": false,             // true 表示因依赖不可用而降级
   "total": 3,
   "results": [
@@ -163,6 +163,11 @@ kb doctor --json     # 结构化，供脚本判断
 | `KB_REMOTE_TOKEN` | 远程模式的凭据 |
 | `KB_TEI_URL` | TEI 容器地址，默认 `http://localhost:8080` |
 | `KB_EMBED_MODEL` | 灌入时记录的 embedding 模型名，默认 `BAAI/bge-m3`；以 TEI `/info` 的 `model_id` 为准 |
+| `KB_RERANK_ENABLED` | 是否对召回结果做 Stage 3 重排，默认 `0`。评测未见排序收益，见 [eval-rerank-2026-08-21.md](../audits/eval-rerank-2026-08-21.md) |
+| `KB_RERANK_URL` | 重排服务地址，默认 `http://localhost:8082`。不要指向 embedding 容器的 `:8080` |
+| `KB_RERANK_MODEL` | 重排模型名（compose 使用），默认 `BAAI/bge-reranker-v2-m3` |
+| `KB_RERANK_TIMEOUT_MS` | 重排超时，默认 `3000`。超时则返回召回顺序 |
+| `KB_RERANK_CANDIDATES` | 送入重排的候选上限，默认 `20` |
 | `KB_OLLAMA_URL` | Ollama 地址，默认 `http://localhost:11434` |
 | `KB_LLM_MODEL` | 提炼模型，默认 `qwen3:8b` |
 

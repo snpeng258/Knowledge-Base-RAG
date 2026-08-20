@@ -167,4 +167,5 @@ temp/
 # ========================
 /pgdata/
 /.tei-data/
+/.tei-rerank-data/
 /.ollama/
