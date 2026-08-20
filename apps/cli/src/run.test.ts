@@ -28,6 +28,11 @@ function kb(args: string[], env: NodeJS.ProcessEnv = process.env): {
   };
 }
 
+test("ingest url without a url is usage exit 2", () => {
+  const result = kb(["ingest", "url"]);
+  assert.equal(result.status, EXIT.usage);
+});
+
 test("ingest lark without token is usage exit 2", () => {
   const result = kb(["ingest", "lark"]);
   assert.equal(result.status, EXIT.usage);

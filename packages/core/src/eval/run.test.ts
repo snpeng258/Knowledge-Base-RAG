@@ -14,6 +14,8 @@ test("eval fixtures are de-identified", async () => {
     "fixtures/sample-meeting.md",
     "fixtures/eval/sample-article.md",
     "fixtures/eval/sample-ops.md",
+    "fixtures/eval/sample-minutes-transcript.txt",
+    "fixtures/eval/sample-article.html",
   ];
   for (const rel of files) {
     const text = await readFile(resolve(root, rel), "utf8");

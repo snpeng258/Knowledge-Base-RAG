@@ -4,6 +4,7 @@ export const EXIT = {
   usage: 2,
   unavailable: 3,
   notFound: 4,
+  partial: 5,
 } as const;
 
 export class CliExit extends Error {
@@ -17,4 +18,14 @@ export class CliExit extends Error {
 
 export function usage(message: string): never {
   throw new CliExit(EXIT.usage, message);
+}
+
+export function batchIngestExit(successCount: number, failCount: number): number {
+  if (failCount > 0 && successCount > 0) {
+    return EXIT.partial;
+  }
+  if (failCount > 0) {
+    return EXIT.error;
+  }
+  return EXIT.ok;
 }

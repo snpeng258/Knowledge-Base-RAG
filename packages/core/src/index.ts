@@ -7,6 +7,8 @@ export { ingestLocalFile } from "./ingest/file.ts";
 export type { IngestFileResult } from "./ingest/file.ts";
 export { ingestLarkMinute, listLarkMinutes } from "./ingest/lark.ts";
 export type { IngestLarkResult } from "./ingest/lark.ts";
+export { ingestUrl, ingestUrls } from "./ingest/url.ts";
+export type { IngestUrlBatchResult } from "./ingest/url.ts";
 export { createAuthFailClient } from "./lark/cli.ts";
 export { FulltextRetriever } from "./retrieve/fulltext.ts";
 export type { Retriever, SearchQuery, SearchResponse } from "./retrieve/types.ts";

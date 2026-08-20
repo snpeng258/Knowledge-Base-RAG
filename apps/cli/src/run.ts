@@ -5,6 +5,7 @@ import {
   getDocument,
   ingestLocalFile,
   ingestLarkMinute,
+  ingestUrls,
   listLarkMinutes,
   listTags,
   loadEnvFiles,
@@ -13,7 +14,7 @@ import {
 } from "@summer-sum/core";
 import type { SearchQuery } from "@summer-sum/core";
 import { parseArgs, parseDateFlag } from "./args.ts";
-import { CliExit, EXIT, usage } from "./exit.ts";
+import { CliExit, EXIT, usage, batchIngestExit } from "./exit.ts";
 import {
   formatDoctorHuman,
   formatGetHuman,
@@ -117,9 +118,39 @@ async function dispatch(argv: string[]): Promise<number> {
       }
       return EXIT.ok;
     }
+    if (target === "url") {
+      const urls = args.positional.slice(2);
+      if (urls.length === 0) {
+        usage("usage: kb ingest url <url> [url...]");
+      }
+      const batch = await ingestUrls(urls, requireDatabaseUrl(cfg.databaseUrl));
+      if (args.json) {
+        printJson({
+          successes: batch.successes.map((row) => ({
+            document_id: row.documentId,
+            action: row.action,
+            chunk_count: row.chunkCount,
+            source_url: row.sourceUrl,
+          })),
+          failures: batch.failures.map((row) => ({
+            url: row.url,
+            source_ref: row.sourceRef,
+            reason: row.reason,
+          })),
+        });
+      } else {
+        for (const row of batch.successes) {
+          writeOut(`${row.action} ${row.documentId} ${row.sourceUrl}\n`);
+        }
+        for (const row of batch.failures) {
+          writeErr(`failed ${row.url}: ${row.reason}\n`);
+        }
+      }
+      return batchIngestExit(batch.successes.length, batch.failures.length);
+    }
     const filePath = args.positional[2];
     if (target !== "file" || filePath === undefined) {
-      usage("usage: kb ingest file <path> | kb ingest lark <minute_token|list|--latest>");
+      usage("usage: kb ingest file <path> | kb ingest lark <minute_token|list|--latest> | kb ingest url <url>");
     }
     const result = await ingestLocalFile(filePath, requireDatabaseUrl(cfg.databaseUrl));
     if (args.json) {
