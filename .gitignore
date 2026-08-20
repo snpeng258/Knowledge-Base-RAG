@@ -1,0 +1,151 @@
+# ========================
+# Dependencies
+# ========================
+node_modules/
+.pnp
+.pnp.js
+.pnp.*
+.venv/
+venv/
+__pycache__/
+*.pyc
+.Python
+target/
+vendor/
+
+# ========================
+# Build outputs (anchored to repo root so scripts/build/ stays tracked)
+# ========================
+/out/
+/dist/
+/build/
+/coverage/
+
+# ========================
+# Environment variables
+# ========================
+.env
+.env.*
+!.env.example
+
+# ========================
+# Debug & Logs
+# ========================
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+*.log
+logs/
+
+# ========================
+# Runtime data
+# ========================
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# ========================
+# Cache
+# ========================
+.cache/
+.turbo/
+.eslintcache
+.stylelintcache
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# ========================
+# Test & Coverage
+# ========================
+coverage/
+.nyc_output/
+htmlcov/
+
+# ========================
+# IDE - VSCode
+# ========================
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+!.vscode/launch.json
+!.vscode/tasks.json
+
+# ========================
+# IDE - JetBrains
+# ========================
+.idea/
+*.iml
+*.iws
+*.ipr
+out_intellij/
+
+# ========================
+# IDE - Windsurf / Cursor / Zed / Vim / Emacs / Sublime
+# ========================
+.windsurf/
+.windsurfrules
+.cursor/
+.cursorrules
+.zed/
+*.swp
+*.swo
+*~
+.netrwhist
+\#*\#
+.\#*
+*.sublime-workspace
+*.sublime-project
+
+# ========================
+# OS generated files
+# ========================
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# ========================
+# Misc archives
+# ========================
+*.tgz
+*.tar.gz
+*.zip
+*.7z
+
+# ========================
+# Temporary files
+# ========================
+tmp/
+temp/
+*.tmp
+*.temp
+
+# ========================
+# Media (recordings/videos stay off-git; store as links or object storage)
+# ========================
+*.mp4
+*.mov
+*.avi
+*.mkv
+*.webm
+*.flv
+*.wmv
+*.m4v
+*.mpg
+*.mpeg
+*.m2v
+*.3gp
+*.3g2
+*.wav
+*.flac
+*.aac
+*.wma
+*.mp3
+*.m4a
