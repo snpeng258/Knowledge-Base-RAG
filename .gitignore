@@ -159,6 +159,8 @@ temp/
 /corpus/
 !/corpus/.gitkeep
 /fixtures/real/
+/minutes/
+/notes/
 
 # ========================
 # Local service & model data (Postgres volume, TEI model cache)

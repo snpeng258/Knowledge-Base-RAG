@@ -28,6 +28,11 @@ function kb(args: string[], env: NodeJS.ProcessEnv = process.env): {
   };
 }
 
+test("ingest lark without token is usage exit 2", () => {
+  const result = kb(["ingest", "lark"]);
+  assert.equal(result.status, EXIT.usage);
+});
+
 test("missing search query is usage exit 2", () => {
   const result = kb(["search"]);
   assert.equal(result.status, EXIT.usage);

@@ -12,6 +12,7 @@ export type CliArgs = {
   databaseUrl: string | undefined;
   teiUrl: string | undefined;
   ollamaUrl: string | undefined;
+  latest: boolean;
 };
 
 function takeValue(argv: string[], index: number, flag: string): { value: string; next: number } {
@@ -34,6 +35,7 @@ export function parseArgs(argv: string[]): CliArgs {
   let databaseUrl: string | undefined;
   let teiUrl: string | undefined;
   let ollamaUrl: string | undefined;
+  let latest = false;
 
   for (let i = 0; i < argv.length; i += 1) {
     const arg = argv[i];
@@ -42,6 +44,10 @@ export function parseArgs(argv: string[]): CliArgs {
     }
     if (arg === "--json") {
       json = true;
+      continue;
+    }
+    if (arg === "--latest") {
+      latest = true;
       continue;
     }
     if (arg === "--remote") {
@@ -106,7 +112,7 @@ export function parseArgs(argv: string[]): CliArgs {
     positional.push(arg);
   }
 
-  return { json, remote, positional, tags, kind, since, until, limit, databaseUrl, teiUrl, ollamaUrl };
+  return { json, remote, positional, tags, kind, since, until, limit, databaseUrl, teiUrl, ollamaUrl, latest };
 }
 
 export function parseDateFlag(raw: string, flag: string): Date {

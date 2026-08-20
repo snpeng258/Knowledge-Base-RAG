@@ -4,6 +4,8 @@ import {
   FulltextRetriever,
   getDocument,
   ingestLocalFile,
+  ingestLarkMinute,
+  listLarkMinutes,
   listTags,
   loadEnvFiles,
   NotFoundError,
@@ -84,9 +86,40 @@ async function dispatch(argv: string[]): Promise<number> {
 
   if (command === "ingest") {
     const target = args.positional[1];
+    if (target === "lark") {
+      const sub = args.positional[2];
+      if (sub === "list") {
+        const rows = await listLarkMinutes();
+        if (args.json) {
+          printJson(rows);
+        } else if (rows.length === 0) {
+          writeOut("No minutes.\n");
+        } else {
+          writeOut(`${rows.map((row) => `${row.token}\t${row.title}`).join("\n")}\n`);
+        }
+        return EXIT.ok;
+      }
+      const token = args.latest ? (await listLarkMinutes())[0]?.token : sub;
+      if (token === undefined) {
+        usage("usage: kb ingest lark <minute_token|list|--latest>");
+      }
+      const result = await ingestLarkMinute(token, requireDatabaseUrl(cfg.databaseUrl));
+      if (args.json) {
+        printJson({
+          document_id: result.documentId,
+          action: result.action,
+          chunk_count: result.chunkCount,
+          ingest_run_id: result.ingestRunId,
+          minute_token: result.minuteToken,
+        });
+      } else {
+        writeOut(`${result.action} ${result.documentId} chunks=${result.chunkCount} token=${result.minuteToken}\n`);
+      }
+      return EXIT.ok;
+    }
     const filePath = args.positional[2];
     if (target !== "file" || filePath === undefined) {
-      usage("usage: kb ingest file <path>");
+      usage("usage: kb ingest file <path> | kb ingest lark <minute_token|list|--latest>");
     }
     const result = await ingestLocalFile(filePath, requireDatabaseUrl(cfg.databaseUrl));
     if (args.json) {

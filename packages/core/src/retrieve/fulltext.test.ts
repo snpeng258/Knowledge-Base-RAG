@@ -72,7 +72,7 @@ test("fulltext search returns cards without content", async () => {
     const byKind = await retriever.search({ query: "产品力", kind: "file" });
     assert.ok(byKind.results.every((item) => item.kind === "file"));
 
-    const byOtherKind = await retriever.search({ query: "产品力", kind: "meeting" });
+    const byOtherKind = await retriever.search({ query: "产品力", kind: "image" });
     assert.equal(byOtherKind.results.length, 0);
 
     const limited = await retriever.search({ query: "产品力", limit: 1 });

@@ -1,13 +1,12 @@
 import { readFile } from "node:fs/promises";
-import { and, eq, sql } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
-import { chunks, documents, ingestRuns } from "../db/schema.ts";
+import { ingestRuns } from "../db/schema.ts";
 import { DependencyError, isUnavailableMessage } from "../errors.ts";
 import { splitIntoChunks } from "./chunk.ts";
-import { sha256 } from "./hash.ts";
+import { persistDocument } from "./persist.ts";
 import { canonicalLocalPath, slugFromFilePath } from "./slug.ts";
-import { tokenizeForSearch } from "./tokenize.ts";
 
 export type IngestFileResult = {
   documentId: string;
@@ -17,7 +16,6 @@ export type IngestFileResult = {
 };
 
 type Db = ReturnType<typeof drizzle>;
-type QueryDb = Pick<Db, "select" | "insert" | "update" | "delete">;
 
 function openDb(url: string) {
   const client = postgres(url, { max: 1, onnotice: () => undefined, connect_timeout: 3 });
@@ -63,7 +61,7 @@ export async function ingestLocalFile(
     }
 
     try {
-      const result = await db.transaction((tx) => writeDocument(tx, absolutePath, content));
+      const result = await db.transaction((tx) => writeFileDocument(tx, absolutePath, content));
       await db
         .update(ingestRuns)
         .set({
@@ -92,77 +90,30 @@ export async function ingestLocalFile(
   }
 }
 
-async function writeDocument(
-  db: QueryDb,
+async function writeFileDocument(
+  db: Parameters<typeof persistDocument>[0],
   absolutePath: string,
   content: string,
 ): Promise<Omit<IngestFileResult, "ingestRunId">> {
-  const hash = sha256(content);
   const title = titleFromMarkdown(content) ?? slugFromFilePath(absolutePath);
-  const pieces = splitIntoChunks(content);
-  const [existing] = await db
-    .select()
-    .from(documents)
-    .where(and(eq(documents.sourceKind, "local_file"), eq(documents.sourceRef, absolutePath)));
-
-  if (existing !== undefined && existing.contentHash === hash) {
-    const existingChunks = await db
-      .select({ id: chunks.id })
-      .from(chunks)
-      .where(eq(chunks.documentId, existing.id));
-    if (existingChunks.length === pieces.length) {
-      await db
-        .update(documents)
-        .set({ updatedAt: new Date() })
-        .where(eq(documents.id, existing.id));
-      return { documentId: existing.id, action: "skipped", chunkCount: existingChunks.length };
-    }
-  }
-
-  const documentId = existing?.id ?? slugFromFilePath(absolutePath);
-  const docValues = {
-    id: documentId,
-    kind: "file" as const,
+  return persistDocument(db, {
+    id: slugFromFilePath(absolutePath),
+    kind: "file",
     title,
-    description: null,
     content,
-    contentHash: hash,
-    lang: "zh",
     sourceKind: "local_file",
     sourceRef: absolutePath,
     sourceUrl: null,
-    status: "draft",
-    wordCount: tokenizeForSearch(content).split(" ").filter((part) => part.length > 0).length,
-    searchVector: sql`to_tsvector('simple', ${tokenizeForSearch(content)})`,
+    occurredAt: null,
     meta: { path: absolutePath },
-    updatedAt: new Date(),
-  };
-
-  if (existing === undefined) {
-    await db.insert(documents).values(docValues);
-  } else {
-    await db.update(documents).set(docValues).where(eq(documents.id, documentId));
-    await db.delete(chunks).where(eq(chunks.documentId, documentId));
-  }
-
-  if (pieces.length > 0) {
-    await db.insert(chunks).values(
-      pieces.map((piece) => ({
-        documentId,
-        ord: piece.ord,
-        text: piece.text,
-        charStart: piece.charStart,
-        charEnd: piece.charEnd,
-        searchVector: sql`to_tsvector('simple', ${tokenizeForSearch(piece.text)})`,
-      })),
-    );
-  }
-
-  return {
-    documentId,
-    action: existing === undefined ? "inserted" : "updated",
-    chunkCount: pieces.length,
-  };
+    pieces: splitIntoChunks(content).map((piece) => ({
+      text: piece.text,
+      charStart: piece.charStart,
+      charEnd: piece.charEnd,
+      speaker: null,
+      tsStart: null,
+    })),
+  });
 }
 
 function titleFromMarkdown(content: string): string | undefined {
