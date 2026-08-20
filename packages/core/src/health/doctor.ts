@@ -12,14 +12,21 @@ export type DoctorReport = {
   items: DoctorItem[];
 };
 
-async function ping(url: string, timeoutMs: number): Promise<boolean> {
+async function inspectTei(teiUrl: string): Promise<{ reachable: boolean; modelName: string | null }> {
+  const base = teiUrl.replace(/\/$/, "");
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  const timer = setTimeout(() => controller.abort(), 1500);
   try {
-    await fetch(url, { signal: controller.signal });
-    return true;
+    const response = await fetch(`${base}/info`, { signal: controller.signal });
+    if (!response.ok) {
+      return { reachable: true, modelName: null };
+    }
+    const payload: unknown = await response.json();
+    const record = typeof payload === "object" && payload !== null ? (payload as Record<string, unknown>) : {};
+    const modelName = typeof record.model_id === "string" ? record.model_id : null;
+    return { reachable: true, modelName };
   } catch {
-    return false;
+    return { reachable: false, modelName: null };
   } finally {
     clearTimeout(timer);
   }
@@ -93,12 +100,18 @@ export async function doctorReport(input: {
   }
   }
 
-  const teiOk = await ping(input.teiUrl, 1500);
+  const tei = await inspectTei(input.teiUrl);
   items.push({
     name: "tei",
     required: false,
-    status: teiOk ? "ok" : "degraded",
-    detail: teiOk ? input.teiUrl : `unreachable: ${input.teiUrl}`,
+    status: tei.reachable ? "ok" : "degraded",
+    detail: tei.reachable ? input.teiUrl : `unreachable: ${input.teiUrl}`,
+  });
+  items.push({
+    name: "tei_model",
+    required: false,
+    status: tei.modelName !== null ? "ok" : "degraded",
+    detail: tei.modelName ?? "model unknown",
   });
 
   const ollamaModel = process.env.KB_LLM_MODEL ?? "qwen3:8b";

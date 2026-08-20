@@ -20,10 +20,11 @@
 pnpm install                # 安装依赖（workspace 根目录）
 pnpm typecheck              # 类型检查，必须无错
 pnpm test                   # 测试，必须全绿
-docker compose up -d        # 起 Postgres（+ 可选 TEI）
+docker compose up -d        # 起 Postgres + TEI（默认 CPU）
 pnpm db:migrate             # 跑数据库迁移
 
 pnpm kb doctor              # 健康检查：PG / TEI / Ollama / 飞书授权
+pnpm kb embed               # 为尚无向量的切片灌入 embedding（需 TEI）
 pnpm kb search "<query>"    # 检索，返回文档卡片
 pnpm kb get <id>            # 按 id 取全文
 pnpm kb tags                # 列出标签词表

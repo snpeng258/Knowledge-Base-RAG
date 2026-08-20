@@ -17,6 +17,10 @@ export type { DocumentRecord } from "./documents/access.ts";
 export { NotFoundError, DependencyError } from "./errors.ts";
 export { doctorReport } from "./health/doctor.ts";
 export type { DoctorReport } from "./health/doctor.ts";
+export { embedMissingChunks } from "./embed/ingest.ts";
+export type { EmbedRunResult } from "./embed/ingest.ts";
+export { TeiEmbedder } from "./embed/tei.ts";
+export type { Embedder } from "./embed/tei.ts";
 export type { LlmProvider } from "./llm/types.ts";
 export {
   attachTags,

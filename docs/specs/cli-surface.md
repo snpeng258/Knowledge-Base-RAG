@@ -49,6 +49,7 @@ CLI 有两类消费者，需求不同：
 | `kb ingest file <path>` | 入库本地文件 | 写 | 可选 |
 | `kb ingest url <url>` | 解析并入库链接 | 写 | 可选 |
 | `kb ingest lark <subcmd>` | 从飞书官方 API 入库 | 写 | 可选 |
+| `kb embed` | 为尚无向量的切片灌入 embedding | 写 | 否（依赖 TEI，不依赖 LLM） |
 | `kb mcp` | 启动 MCP server（stdio） | 读 | 否 |
 
 ### 3.2 渐进式披露的三步
@@ -161,6 +162,7 @@ kb doctor --json     # 结构化，供脚本判断
 | `KB_REMOTE_URL` | 远程模式的 API 地址 |
 | `KB_REMOTE_TOKEN` | 远程模式的凭据 |
 | `KB_TEI_URL` | TEI 容器地址，默认 `http://localhost:8080` |
+| `KB_EMBED_MODEL` | 灌入时记录的 embedding 模型名，默认 `BAAI/bge-m3`；以 TEI `/info` 的 `model_id` 为准 |
 | `KB_OLLAMA_URL` | Ollama 地址，默认 `http://localhost:11434` |
 | `KB_LLM_MODEL` | 提炼模型，默认 `qwen3:8b` |
 

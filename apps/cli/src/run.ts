@@ -14,6 +14,8 @@ import {
   approveTagProposal,
   rejectTagProposal,
   repoRootFrom,
+  embedMissingChunks,
+  TeiEmbedder,
 } from "@summer-sum/core";
 import type { SearchQuery } from "@summer-sum/core";
 import { parseArgs, parseDateFlag } from "./args.ts";
@@ -85,7 +87,7 @@ async function dispatch(argv: string[]): Promise<number> {
   }
   const command = args.positional[0];
   if (command === undefined) {
-    usage("usage: kb <ingest|search|get|tags|doctor> [...]");
+    usage("usage: kb <ingest|search|get|tags|doctor|embed> [...]");
   }
 
   if (command === "ingest") {
@@ -247,6 +249,27 @@ async function dispatch(argv: string[]): Promise<number> {
       return EXIT.ok;
     }
     usage("usage: kb tags [list|proposals|approve <id>|reject <id>]");
+  }
+
+  if (command === "embed") {
+    const result = await embedMissingChunks(
+      requireDatabaseUrl(cfg.databaseUrl),
+      new TeiEmbedder(cfg.teiUrl, process.env.KB_EMBED_MODEL ?? "BAAI/bge-m3"),
+    );
+    if (args.json) {
+      printJson({
+        embedded: result.embedded,
+        skipped: result.skipped,
+        model_name: result.modelName,
+        dim: result.dim,
+        index_name: result.indexName,
+      });
+    } else {
+      writeOut(
+        `embedded=${result.embedded} skipped=${result.skipped} model=${result.modelName} index=${result.indexName}\n`,
+      );
+    }
+    return EXIT.ok;
   }
 
   if (command === "doctor") {

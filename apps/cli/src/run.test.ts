@@ -109,6 +109,8 @@ test("ingest file, search, get, tags, and doctor work", async () => {
   const names = report.items.map((item) => item.name);
   assert.ok(names.includes("ollama"));
   assert.ok(names.includes("ollama_model"));
+  assert.ok(names.includes("tei"));
+  assert.ok(names.includes("tei_model"));
   const optional = report.items.filter((item) => !item.required);
   assert.ok(optional.every((item) => item.status === "ok" || item.status === "degraded"));
 
@@ -117,6 +119,18 @@ test("ingest file, search, get, tags, and doctor work", async () => {
     KB_OLLAMA_URL: "http://127.0.0.1:1",
   });
   assert.equal(searchWithoutOllama.status, EXIT.ok, searchWithoutOllama.stderr);
+
+  const searchWithoutTei = kb(["search", "产品力"], {
+    ...process.env,
+    KB_TEI_URL: "http://127.0.0.1:1",
+  });
+  assert.equal(searchWithoutTei.status, EXIT.ok, searchWithoutTei.stderr);
+});
+
+test("embed with unreachable tei is exit 3", () => {
+  const result = kb(["embed", "--tei-url", "http://127.0.0.1:1"]);
+  assert.equal(result.status, EXIT.unavailable, result.stderr);
+  assert.match(result.stderr, /tei|unavailable|ECONNREFUSED|fetch/i);
 });
 
 test("doctor with unreachable ollama is not exit 3", () => {
