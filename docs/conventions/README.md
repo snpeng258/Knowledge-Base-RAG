@@ -3,7 +3,7 @@
 项目规范、编码约定、协作约定。
 
 > Created: 2026-08-20
-> Updated: 2026-08-20
+> Updated: 2026-08-21
 
 ## 用途
 
@@ -19,7 +19,7 @@
 ## 现有文档
 
 - [code-size-and-organization.md](./code-size-and-organization.md) — 长度阈值、colocation、拆分判断
-- [project-structure.md](./project-structure.md) — 当前目录与分层；源码布局待架构决策
+- [project-structure.md](./project-structure.md) — 目录与分层（monorepo 布局已定，Web 内部结构待定）
 - [code-style.md](./code-style.md) — 通用风格、安全与调试隔离
 - [code-review.md](./code-review.md) — Review 检查清单
 
